@@ -1,0 +1,29 @@
+openapi: 3.0.0
+info:
+  description: api documentation
+  version: "1.0.0"
+  title: Practicum Project
+servers:
+  - url: http://localhost:8080/api
+    description: local development
+paths:
+  /recipes:
+    get:
+      operationId: api.graph.get_data
+      tags:
+        - data
+      summary: data
+      description: data
+      responses:
+        200:
+          description: Successfully retrieved the data
+  /allergens:
+    get:
+      operationId: api.allergens.get_allergens
+      tags:
+        - allergens
+      summary: gets the allergens
+      description: gets the allergens
+      responses:
+        200:
+          description: Successfull

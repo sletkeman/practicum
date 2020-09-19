@@ -1,0 +1,4 @@
+const SET_ERROR = "SET_ERROR";
+const SET_ALLERGENS = "SET_ALLERGENS";
+
+export { SET_ERROR, SET_ALLERGENS };
