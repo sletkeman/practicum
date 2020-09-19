@@ -6,6 +6,8 @@ from os import path
 from flask import render_template, send_from_directory
 from flask_cors import CORS
 import connexion
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="../.env")
 
 # Create the application instance
 flask_app = connexion.App(__name__)

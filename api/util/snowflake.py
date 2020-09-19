@@ -1,8 +1,7 @@
 """Snowflake Utils: Provides a wrapper for the snowflake connector"""
 
 from os import environ
-from snowflake.connector import DictCursor, connect
-
+from snowflake import connector
 
 class SnowflakeDatabase(object):
     '''Wrapper for handling Snowflake connection setup and teardown.
@@ -11,9 +10,9 @@ class SnowflakeDatabase(object):
     '''
     def __init__(
             self,
-            warehouse,
-            database,
-            schema='Public',
+            warehouse='ADDS_DW',
+            database='CONTENT_ENGAGEMENT',
+            schema='ENGAGEMENT',
             user=None,
             password=None,
             account=None,
@@ -25,7 +24,7 @@ class SnowflakeDatabase(object):
             password = environ['SNOWFLAKE_PASS']
             account = environ['SNOWFLAKE_ACCT']
 
-        self.connection = connect(
+        self.connection = connector.connect(
             user=user,
             password=password,
             account=account,
@@ -46,7 +45,7 @@ class SnowflakeDatabase(object):
         """executes a commit"""
         return self.execute('commit')
 
-    def cursor(self, cursor_class=DictCursor):
+    def cursor(self, cursor_class=connector.DictCursor):
         """gets a cursor"""
         return cursor_class(self.connection)
 

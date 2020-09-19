@@ -3,16 +3,13 @@
 """
 
 from flask import abort
-
+from services.snowflake import get_viewers
 
 def get_allergens():
+    """gets the allergens"""
     try:
-        result = [
-            { "group": "group 1", "ingredients": 1 },
-            { "group": "group 2", "ingredients": 2 },
-            { "group": "group 3", "ingredients": 3 },
-            { "group": "group 4", "ingredients": 4 }
-        ]
-        return result
+        viewer_condition = "v.hascat and v.age > 60 and v.gender = 'F'"
+        viewers = get_viewers(20, viewer_condition)
+        return viewers
     except RuntimeError as ex:
         abort(500, ex.args[1])
