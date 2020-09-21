@@ -11,7 +11,6 @@ def get_viewers(sample_size, condition):
             from engagement.viewers v sample ({sample_size} rows)
             where {condition}
         """
-        print(query)
         return sno.query(query)
 
 def get_content(viewers):
@@ -23,7 +22,6 @@ def get_content(viewers):
             join engagement.content c on e.contentsk = c.contentsk
             where e.personkey in ('{"','".join([v['PERSONKEY'] for v in viewers])}') and c.programcategory = 'SERIES'
         """
-        print(query)
         return sno.query(query)
 
 def get_engagement(viewers):
@@ -35,5 +33,13 @@ def get_engagement(viewers):
             join engagement.content c on e.contentsk = c.contentsk
             where personkey in ('{"','".join([v['PERSONKEY'] for v in viewers])}') and c.programcategory = 'SERIES'
         """
-        print(query)
+        return sno.query(query)
+
+def getCount(minimum, maximum):
+    with SnowflakeDatabase() as sno:
+        query = f"""
+            select count(engagement) as num
+            from engagement.engagement
+            where engagement >= {minimum} and engagement < {maximum}
+        """
         return sno.query(query)

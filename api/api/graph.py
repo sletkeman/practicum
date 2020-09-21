@@ -1,6 +1,6 @@
 """
 useful for setup
-ln -s /usr/local/Cellar/graph-tool/2.35/lib/python3.8/site-packages/graph_tool /Users/sletkeman/practicum/venv/lib/python3.8/site-packages
+sln -s /usr/local/Cellar/graph-tool/2.33/lib/python3.8/site-packages/graph_tool /Users/sletkeman/practicum/venv/lib/python3.8/site-packages
 """
 
 from services.snowflake import (
@@ -8,6 +8,7 @@ from services.snowflake import (
 )
 from flask import abort
 import graph_tool.all as gt
+import numpy as np
 
 v_is_content = None
 v_person_key = None
@@ -32,7 +33,7 @@ def build_tree():
     global v_gender
     global v_age
     viewer_condition = "v.hascat and v.age > 60 and v.gender = 'F'"
-    viewers = get_viewers(200, viewer_condition)
+    viewers = get_viewers(50, viewer_condition)
     engagement = get_engagement(viewers)
     content = get_content(viewers)
     viewers_map = {}
@@ -81,59 +82,67 @@ def build_tree():
         e_engagement[edge] = e['ENGAGEMENT']
     return g
 
-def get_data():
-    try:
-        g = build_tree()
-        state = gt.minimize_blockmodel_dl(g
-            # , state_args=dict(recs=[g.ep.engagement],rec_types=["real-exponential"])
-            , deg_corr=True
-        )
-        print(state.entropy())
-        b = state.get_blocks()
-        verticies = g.get_vertices()
-        results = {}
-        for i, v in enumerate(verticies):
-            if b[i] not in results:
-                results[b[i]] = []
-            if v_is_content[v]:
-                results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
-            else:
-                results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
-        return results
-    except Exception as e:
-        abort(500, e.msg)
-
-# def recurse(max_level, blocks, v, level, i, results):
-#     b = blocks[level]
-#     if level + 1 == max_level:
-#         if b[i] not in results:
-#             results[b[i]] = []
-#         if v_is_content[v]:
-#             results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
-#         else:
-#             results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
-#     else:
-#         if b[i] not in results:
-#             results[b[i]] = {}
-#         recurse(max_level, blocks, v, level + 1, b[i], results[b[i]])
-
 # def get_data():
 #     try:
 #         g = build_tree()
-#         state = gt.minimize_nested_blockmodel_dl(g
-#             # , state_args=dict(recs=[g.ep.engagement],rec_types=["real-exponential"])
+#         state = gt.minimize_blockmodel_dl(g
+#             , state_args=dict(recs=[g.ep.engagement],rec_types=["real-exponential"])
 #             , deg_corr=True
 #         )
 #         print(state.entropy())
-#         levels = state.get_levels()
-#         blocks = []
-#         for level in levels:
-#             blocks.append(level.get_blocks())
-#             print(levels)
+#         b = state.get_blocks()
 #         verticies = g.get_vertices()
 #         results = {}
 #         for i, v in enumerate(verticies):
-#             recurse(len(blocks), blocks, v, 0, i, results)
+#             if b[i] not in results:
+#                 results[b[i]] = []
+#             if v_is_content[v]:
+#                 results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
+#             else:
+#                 results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
 #         return results
 #     except Exception as e:
-#         abort(500, e)
+#         abort(500, e.msg)
+
+def recurse(max_level, blocks, v, level, i, results):
+    b = blocks[level]
+    if level + 1 == max_level:
+        if b[i] not in results:
+            results[b[i]] = []
+        if v_is_content[v]:
+            results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
+        else:
+            results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
+    else:
+        if b[i] not in results:
+            results[b[i]] = {}
+        recurse(max_level, blocks, v, level + 1, b[i], results[b[i]])
+
+def get_data():
+    try:
+        g = build_tree()
+        state = gt.minimize_nested_blockmodel_dl(g
+            , state_args=dict(recs=[g.ep.engagement],rec_types=["real-exponential"])
+            , deg_corr=False
+        )
+        S1 = state.entropy()
+        state = state.copy(bs=state.get_bs() + [np.zeros(1)] * 4, sampling=True)
+        for i in range(100):
+            ret = state.multiflip_mcmc_sweep(niter=10, beta=np.inf)
+
+        S2 = state.entropy()
+
+        print("Improvement:", S2 - S1)
+
+
+        levels = state.get_levels()
+        blocks = []
+        for level in levels:
+            blocks.append(level.get_blocks())
+        verticies = g.get_vertices()
+        results = {}
+        for i, v in enumerate(verticies):
+            recurse(len(blocks), blocks, v, 0, i, results)
+        return results
+    except Exception as e:
+        abort(500, e.msg)
