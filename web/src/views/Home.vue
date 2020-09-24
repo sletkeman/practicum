@@ -1,7 +1,6 @@
 <template>
   <div class="allergen">
-    <v-data-table :headers="headers" :items="allergens" class="elevation-1">
-    </v-data-table>
+    Allergen
   </div>
 </template>
 
@@ -23,11 +22,11 @@ export default {
   },
   computed: {
     ...mapState({
-      allergens: state => state.recipe.allergens
+      // allergens: state => state.recipe.allergens
     })
   },
   async mounted() {
-    await this.GET_ALLERGENS();
+    // await this.GET_ALLERGENS();
   }
 };
 </script>

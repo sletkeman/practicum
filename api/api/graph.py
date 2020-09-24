@@ -33,7 +33,7 @@ def build_tree():
     global v_gender
     global v_age
     viewer_condition = "v.hascat and v.age > 60 and v.gender = 'F'"
-    viewers = get_viewers(50, viewer_condition)
+    viewers = get_viewers(250, viewer_condition)
     engagement = get_engagement(viewers)
     content = get_content(viewers)
     viewers_map = {}
@@ -79,7 +79,8 @@ def build_tree():
         v = viewers_map[e['PERSONKEY']]
         c = content_map[e['CONTENTSK']]
         edge = g.add_edge(v, c)
-        e_engagement[edge] = e['ENGAGEMENT']
+        eng = e['ENGAGEMENT']
+        e_engagement[edge] = eng if eng <= 100 else 100
     return g
 
 # def get_data():
@@ -122,8 +123,8 @@ def get_data():
     try:
         g = build_tree()
         state = gt.minimize_nested_blockmodel_dl(g
-            , state_args=dict(recs=[g.ep.engagement],rec_types=["real-exponential"])
-            , deg_corr=False
+            , state_args=dict(recs=[g.ep.engagement],rec_types=["real-normal"])
+            , deg_corr=True
         )
         S1 = state.entropy()
         state = state.copy(bs=state.get_bs() + [np.zeros(1)] * 4, sampling=True)
