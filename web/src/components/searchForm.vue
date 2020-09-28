@@ -73,6 +73,134 @@
             :search-input.sync="networkFilterText"
           ></v-autocomplete>
         </v-list-group>
+        <v-list-group :value="expanded.viewers">
+          <template v-slot:activator>
+            <v-list-item-content>
+              <v-list-item-title>Viewers</v-list-item-title>
+            </v-list-item-content>
+          </template>
+          <v-select
+            label="Gender"
+            v-model="form.gender"
+            class="ma-4"
+            :items="gender"
+            :clearable="true"
+          ></v-select>
+          <div class="rangeSlider">
+            <v-label>Age</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox v-model="form.useAge"></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useAge"
+                v-model="form.age"
+                :thumb-size="24"
+                thumb-label="always"
+                :max="age.max"
+                :min="age.min"
+              >
+              </v-range-slider>
+            </div>
+          </div>
+          <div class="rangeSlider">
+            <v-label>Income</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox v-model="form.useIncome"></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useIncome"
+                v-model="form.income"
+                :thumb-size="24"
+                thumb-label="always"
+                :max="income.max"
+                :min="income.min"
+              ></v-range-slider>
+            </div>
+          </div>
+          <div class="rangeSlider">
+            <v-label>Number of Children</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox v-model="form.useChildren"></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useChildren"
+                v-model="form.children"
+                :thumb-size="24"
+                thumb-label="always"
+                :max="children.max"
+                :min="children.min"
+              ></v-range-slider>
+            </div>
+          </div>
+          <div class="rangeSlider">
+            <v-label>Number of Adults</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox v-model="form.useAdults"></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useAdults"
+                v-model="form.adults"
+                :thumb-size="24"
+                thumb-label="always"
+                :max="adults.max"
+                :min="adults.min"
+              ></v-range-slider>
+            </div>
+          </div>
+          <v-select
+            :style="{ marginTop: '0 !important' }"
+            label="County Size"
+            v-model="form.countySize"
+            class="ma-4"
+            :items="countySizes"
+            :clearable="true"
+            item-text="name"
+            item-value="value"
+          ></v-select>
+          <v-select
+            label="Education Level"
+            v-model="form.educationLevel"
+            class="ma-4"
+            :items="educationLevels"
+            :clearable="true"
+            item-text="name"
+            item-value="value"
+          ></v-select>
+          <v-select
+            label="Language"
+            v-model="form.language"
+            class="ma-4"
+            :items="householdLanguage"
+            :clearable="true"
+          ></v-select>
+          <div class="rangeSlider">
+            <v-label>Weekly Viewing Minutes</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox v-model="form.useViewingMinutes"></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useViewingMinutes"
+                v-model="form.viewingMinutes"
+                thumb-label="always"
+                :max="weeklyViewingMinutes.max"
+                :min="weeklyViewingMinutes.min"
+              ></v-range-slider>
+            </div>
+          </div>
+          <v-select
+            label="Household Size"
+            v-model="form.size"
+            class="ma-4"
+            :items="householdSize"
+            :clearable="true"
+            :style="{ marginTop: '0 !important' }"
+          ></v-select>
+          <v-checkbox
+            label="Has Cat"
+            v-model="form.hasCat"
+            class="ma-4"
+          ></v-checkbox>
+          <v-checkbox
+            label="Has Dog"
+            v-model="form.hasDog"
+            class="ma-4"
+          ></v-checkbox>
+        </v-list-group>
       </v-list>
     </v-form>
   </div>
@@ -88,7 +216,8 @@ export default {
       valid: true,
       expanded: {
         model: false,
-        content: true
+        content: false,
+        viewers: true
       },
       form: {
         useNestedModel: true,
@@ -99,7 +228,24 @@ export default {
         programCategory: "",
         programTypeSummary: "",
         programType: "",
-        network: ""
+        network: "",
+        gender: "",
+        useAge: false,
+        age: [2, 99],
+        useIncome: false,
+        income: [0, 500],
+        useChildren: false,
+        children: [0, 9],
+        useAdults: false,
+        adults: [1, 9],
+        countySize: null,
+        educationLevel: null,
+        language: "",
+        useViewingMinutes: false,
+        viewingMinutes: [0, 14000],
+        size: "",
+        hasCat: false,
+        hasDog: false
       },
       programCategories: ["SERIES", "FEATURE FILM"],
       filteredTypeSummary: [],
@@ -310,16 +456,19 @@ export default {
         "NGC",
         "DXD"
       ],
-      demos: [],
+      gender: ["Male", "Female"],
+      age: {
+        min: 2,
+        max: 99
+      },
       countySizes: [
         { name: "“A” county -25 largest metropolitan areas", value: 3 },
         {
-          name: "“B” county -over 150,000 in population, but not an “A” county",
+          name: "“B” county -over 150,000 in population, but not “A”",
           value: 2
         },
         {
-          name:
-            "“C” county -over 40,000 in population, but not an “A” or “B” county",
+          name: "“C” county -over 40,000 in population, but not “A” or “B”",
           value: 1
         },
         { name: "“D” county -all others", value: 0 }
@@ -332,7 +481,7 @@ export default {
         { name: "Grade school (i.e., 0-8 years)", value: 1 },
         { name: "Unknown", value: 0 }
       ],
-      householdIncome: {
+      income: {
         min: 0,
         max: 500
       },
@@ -343,11 +492,11 @@ export default {
         "Spanish Only",
         "Mostly English"
       ],
-      numberChildren: {
+      children: {
         min: 0,
         max: 9
       },
-      numberAdults: {
+      adults: {
         min: 1,
         max: 9
       },
@@ -357,7 +506,6 @@ export default {
         "3 person household",
         "4 or more persons in the household"
       ],
-      // hasCat, hasDog
       weeklyViewingMinutes: {
         min: 0,
         max: 14000
@@ -389,3 +537,18 @@ export default {
   }
 };
 </script>
+<style scoped>
+.rangeSliderInput {
+  display: flex;
+}
+.rangeSlider {
+  padding-left: 16px;
+  padding-right: 12px;
+}
+.rangeSlider .v-input {
+  margin-top: 0;
+}
+.rangeSlider label {
+  margin-top: 8px;
+}
+</style>
