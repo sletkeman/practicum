@@ -1,29 +1,27 @@
-openapi: 3.0.0
+swagger: "2.0"
 info:
-  description: api documentation
+  description: This is the swagger file that goes with our server code
   version: "1.0.0"
-  title: Practicum Project
-servers:
-  - url: http://localhost:8080/api
-    description: local development
+  title: Swagger ReST Article
+consumes:
+  - application/json
+produces:
+  - application/json
+basePath: /api
 paths:
   /graph:
-    get:
+    post:
       operationId: api.graph.get_data
       tags:
         - data
       summary: data
       description: data
+      parameters:
+          - in: body
+            name: body
+            required: true
+            schema:
+              type: object
       responses:
         200:
           description: Successfully retrieved the data
-  /allergens:
-    get:
-      operationId: api.allergens.get_allergens
-      tags:
-        - allergens
-      summary: gets the allergens
-      description: gets the allergens
-      responses:
-        200:
-          description: Successfull

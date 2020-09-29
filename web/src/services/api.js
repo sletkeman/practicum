@@ -5,6 +5,6 @@ axios.defaults.baseURL =
     ? "http://localhost:8080/api/"
     : "/api/";
 
-const fetchAllergens = () => axios.get("/allergens");
+const getResults = form => axios.post("/graph", form);
 
-export { fetchAllergens };
+export { getResults };

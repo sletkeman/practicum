@@ -1,6 +1,6 @@
 <template>
-  <div class="allergen">
-    Allergen
+  <div class="practicum">
+    Practicum
   </div>
 </template>
 
@@ -8,25 +8,18 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
-  name: "Allergen",
+  name: "Practicum",
   data() {
-    return {
-      headers: [
-        { text: "Allergen Type", value: "group" },
-        { text: "Number of Ingredients", value: "ingredients" }
-      ]
-    };
+    return {};
   },
   methods: {
-    ...mapActions(["GET_ALLERGENS"])
+    ...mapActions([])
   },
   computed: {
     ...mapState({
-      // allergens: state => state.recipe.allergens
     })
   },
   async mounted() {
-    // await this.GET_ALLERGENS();
   }
 };
 </script>

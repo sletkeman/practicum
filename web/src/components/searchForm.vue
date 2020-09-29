@@ -1,8 +1,11 @@
 <template>
   <div>
     <v-form ref="form" v-model="valid">
-      <v-list expand>
-        <v-list-group :value="expanded.model">
+      <v-btn class="mr-4" @click="submit">
+        submit
+      </v-btn>
+      <v-list expand dense>
+        <v-list-group :value="expanded.model" dense>
           <template v-slot:activator>
             <v-list-item-content>
               <v-list-item-title>Model</v-list-item-title>
@@ -11,26 +14,30 @@
           <v-switch
             label="Use Nested Model"
             v-model="form.useNestedModel"
-            class="ma-4"
+            class="mx-4"
+            dense
           ></v-switch>
           <v-switch
             label="Use Degree Correction"
             v-model="form.useDegreeCorrection"
-            class="ma-4"
+            class="mx-4"
+            dense
           ></v-switch>
           <v-switch
             label="Use Edge Weights"
             v-model="form.useEdgeWeights"
-            class="ma-4"
+            class="mx-4"
+            dense
           ></v-switch>
           <v-text-field
             label="Sample Size"
             v-model="form.sampleSize"
-            class="ma-4"
+            class="mx-4"
             type="number"
+            dense
           ></v-text-field>
         </v-list-group>
-        <v-list-group :value="expanded.content">
+        <v-list-group :value="expanded.content" dense>
           <template v-slot:activator>
             <v-list-item-content>
               <v-list-item-title>Content</v-list-item-title>
@@ -39,41 +46,51 @@
           <v-text-field
             label="Program Name"
             v-model="form.programName"
-            class="ma-4"
+            class="mx-4"
+            dense
+            multiple
           ></v-text-field>
           <v-select
             label="Program Category"
             v-model="form.programCategory"
-            class="ma-4"
+            class="mx-4"
             :items="programCategories"
             :clearable="true"
+            dense
+            multiple
           ></v-select>
           <v-autocomplete
             label="Program Type Summary"
             v-model="form.programTypeSummary"
-            class="ma-4"
+            class="mx-4"
             :items="filteredTypeSummary"
             :clearable="true"
             :search-input.sync="typeSummaryFilterText"
+            dense
+            multiple
           ></v-autocomplete>
           <v-autocomplete
             label="Program Type"
             v-model="form.programType"
-            class="ma-4"
+            class="mx-4"
             :items="filteredProgramType"
             :clearable="true"
             :search-input.sync="programTypeFilterText"
+            dense
+            multiple
           ></v-autocomplete>
           <v-autocomplete
             label="Network"
             v-model="form.network"
-            class="ma-4"
+            class="mx-4"
             :items="filteredNetwork"
             :clearable="true"
             :search-input.sync="networkFilterText"
+            dense
+            multiple
           ></v-autocomplete>
         </v-list-group>
-        <v-list-group :value="expanded.viewers">
+        <v-list-group :value="expanded.viewers" dense>
           <template v-slot:activator>
             <v-list-item-content>
               <v-list-item-title>Viewers</v-list-item-title>
@@ -82,14 +99,15 @@
           <v-select
             label="Gender"
             v-model="form.gender"
-            class="ma-4"
+            class="mx-4 my-0"
             :items="gender"
             :clearable="true"
+            dense
           ></v-select>
-          <div class="rangeSlider">
+          <div class="rangeSlider mx-4">
             <v-label>Age</v-label>
             <div class="rangeSliderInput">
-              <v-checkbox v-model="form.useAge"></v-checkbox>
+              <v-checkbox v-model="form.useAge" class="my-0" dense></v-checkbox>
               <v-range-slider
                 :disabled="!form.useAge"
                 v-model="form.age"
@@ -97,14 +115,19 @@
                 thumb-label="always"
                 :max="age.max"
                 :min="age.min"
-              >
-              </v-range-slider>
+                dense
+                class="my-0"
+              ></v-range-slider>
             </div>
           </div>
-          <div class="rangeSlider">
+          <div class="rangeSlider mx-4">
             <v-label>Income</v-label>
             <div class="rangeSliderInput">
-              <v-checkbox v-model="form.useIncome"></v-checkbox>
+              <v-checkbox
+                v-model="form.useIncome"
+                class="my-0"
+                dense
+              ></v-checkbox>
               <v-range-slider
                 :disabled="!form.useIncome"
                 v-model="form.income"
@@ -112,13 +135,19 @@
                 thumb-label="always"
                 :max="income.max"
                 :min="income.min"
+                dense
+                class="my-0"
               ></v-range-slider>
             </div>
           </div>
-          <div class="rangeSlider">
+          <div class="rangeSlider mx-4">
             <v-label>Number of Children</v-label>
             <div class="rangeSliderInput">
-              <v-checkbox v-model="form.useChildren"></v-checkbox>
+              <v-checkbox
+                v-model="form.useChildren"
+                class="my-0"
+                dense
+              ></v-checkbox>
               <v-range-slider
                 :disabled="!form.useChildren"
                 v-model="form.children"
@@ -126,13 +155,19 @@
                 thumb-label="always"
                 :max="children.max"
                 :min="children.min"
+                dense
+                class="my-0"
               ></v-range-slider>
             </div>
           </div>
-          <div class="rangeSlider">
+          <div class="rangeSlider mx-4">
             <v-label>Number of Adults</v-label>
             <div class="rangeSliderInput">
-              <v-checkbox v-model="form.useAdults"></v-checkbox>
+              <v-checkbox
+                v-model="form.useAdults"
+                class="my-0"
+                dense
+              ></v-checkbox>
               <v-range-slider
                 :disabled="!form.useAdults"
                 v-model="form.adults"
@@ -140,6 +175,27 @@
                 thumb-label="always"
                 :max="adults.max"
                 :min="adults.min"
+                dense
+                class="my-0"
+              ></v-range-slider>
+            </div>
+          </div>
+          <div class="rangeSlider mx-4">
+            <v-label>Weekly Viewing Minutes</v-label>
+            <div class="rangeSliderInput">
+              <v-checkbox
+                v-model="form.useViewingMinutes"
+                class="my-0"
+                dense
+              ></v-checkbox>
+              <v-range-slider
+                :disabled="!form.useViewingMinutes"
+                v-model="form.viewingMinutes"
+                thumb-label="always"
+                :max="weeklyViewingMinutes.max"
+                :min="weeklyViewingMinutes.min"
+                dense
+                class="my-0"
               ></v-range-slider>
             </div>
           </div>
@@ -147,58 +203,51 @@
             :style="{ marginTop: '0 !important' }"
             label="County Size"
             v-model="form.countySize"
-            class="ma-4"
+            class="mx-4"
             :items="countySizes"
             :clearable="true"
             item-text="name"
             item-value="value"
+            dense
           ></v-select>
           <v-select
             label="Education Level"
             v-model="form.educationLevel"
-            class="ma-4"
+            class="mx-4"
             :items="educationLevels"
             :clearable="true"
             item-text="name"
             item-value="value"
+            dense
           ></v-select>
           <v-select
             label="Language"
             v-model="form.language"
-            class="ma-4"
+            class="mx-4"
             :items="householdLanguage"
             :clearable="true"
+            dense
           ></v-select>
-          <div class="rangeSlider">
-            <v-label>Weekly Viewing Minutes</v-label>
-            <div class="rangeSliderInput">
-              <v-checkbox v-model="form.useViewingMinutes"></v-checkbox>
-              <v-range-slider
-                :disabled="!form.useViewingMinutes"
-                v-model="form.viewingMinutes"
-                thumb-label="always"
-                :max="weeklyViewingMinutes.max"
-                :min="weeklyViewingMinutes.min"
-              ></v-range-slider>
-            </div>
-          </div>
           <v-select
             label="Household Size"
             v-model="form.size"
-            class="ma-4"
+            class="mx-4"
             :items="householdSize"
             :clearable="true"
             :style="{ marginTop: '0 !important' }"
+            dense
           ></v-select>
           <v-checkbox
             label="Has Cat"
             v-model="form.hasCat"
-            class="ma-4"
+            class="mx-4 my-0"
+            dense
           ></v-checkbox>
           <v-checkbox
             label="Has Dog"
             v-model="form.hasDog"
-            class="ma-4"
+            class="mx-4 my-0"
+            dense
           ></v-checkbox>
         </v-list-group>
       </v-list>
@@ -208,6 +257,7 @@
 
 <script>
 import { mapState } from "vuex";
+import { getResults } from "../services/api";
 
 export default {
   name: "SearchForm",
@@ -224,11 +274,11 @@ export default {
         useDegreeCorrection: true,
         useEdgeWeights: false,
         sampleSize: 250,
-        programName: "",
+        programName: [],
         programCategory: "",
-        programTypeSummary: "",
-        programType: "",
-        network: "",
+        programTypeSummary: [],
+        programType: [],
+        network: [],
         gender: "",
         useAge: false,
         age: [2, 99],
@@ -530,7 +580,9 @@ export default {
     }
   },
   methods: {
-    filterTypeSummary() {}
+    submit() {
+      getResults(this.form);
+    }
   },
   computed: {
     ...mapState({})
@@ -540,10 +592,6 @@ export default {
 <style scoped>
 .rangeSliderInput {
   display: flex;
-}
-.rangeSlider {
-  padding-left: 16px;
-  padding-right: 12px;
 }
 .rangeSlider .v-input {
   margin-top: 0;
