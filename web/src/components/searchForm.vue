@@ -57,7 +57,6 @@
             :items="programCategories"
             :clearable="true"
             dense
-            multiple
           ></v-select>
           <v-autocomplete
             label="Program Type Summary"

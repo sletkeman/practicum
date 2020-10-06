@@ -11,7 +11,7 @@ from services.graphtool import (
 )
 
 def get_condition(body):
-    result = ''
+    result = 'TRUE'
     programName, programCategory, programTypeSummary, programType, network, \
       gender, useAge, age, useIncome, income, useChildren, children, useAdults, adults, \
       useViewingMinutes, viewingMinutes, countySize, educationLevel, language, size, hasCat, hasDog \
@@ -19,16 +19,49 @@ def get_condition(body):
         'gender', 'useAge', 'age', 'useIncome', 'income', 'useChildren', 'children', 'useAdults',
         'adults', 'countySize', 'educationLevel', 'language', 'useViewingMinutes', 'viewingMinutes',
         'size', 'hasCat', 'hasDog')(body)
+
+    # content
     if programName:
-        result = f"{result} c.programname in ('{"','".join([name for name in programName])}')"
+        joined = "','".join(programName)
+        result = f"{result} AND c.programname in ('{joined}')"
     if programCategory:
-        result = f"{result} c.programcategory in ('{"','".join([cat for cat in programCategory])}')"
+        result = f"{result} AND c.programcategory = '{programCategory}'"
     if programTypeSummary:
-        result = f"{result} c.programtypesummary in ('{"','".join([s for s in programTypeSummary])}')"
+        joined = "','".join(programTypeSummary)
+        result = f"{result} AND c.programtypesummary in ('{joined}')"
     if programType:
-        result = f"{result} c.programtype in ('{"','".join([t for t in programCategory])}')"
+        joined = "','".join(programType)
+        result = f"{result} AND c.programtype in ('{joined}')"
     if network:
-        result = f"{result} c.primarynetwork in ('{"','".join([net for net in network])}')"
+        joined = "','".join(network)
+        result = f"{result} AND c.primarynetwork in ('{joined}')"
+
+    # viewers
+    if gender:
+        result = f"{result} AND v.gender = '{gender}'"
+    if useAge:
+        result = f"{result} AND v.age >= {age[0]} AND v.age <= {age[1]}"
+    if useIncome:
+        result = f"{result} AND v.income >= {income[0]} AND v.income <= {income[1]}"
+    if useChildren:
+        result = f"{result} AND v.numberofchildren >= {children[0]} AND v.numberofchildren <= {children[1]}"
+    if useAdults:
+        result = f"{result} AND v.numberofadults >= {adults[0]} AND v.numberofadults <= {adults[1]}"
+    if  useViewingMinutes:
+        result = f"{result} AND v.weekly_viewing_minutes >= {viewingMinutes[0]} AND v.weekly_viewing_minutes <= {viewingMinutes[1]}" 
+    if countySize:
+        result = f"{result} AND v.country_size_level = '{countySize}'"
+    if educationLevel:
+        result = f"{result} AND v.person_education_level = '{educationLevel}'"
+    if language:
+        result = f"{result} AND v.languageofhousehold = '{language}'"
+    if size:
+        result = f"{result} AND v.householdsize = '{size}'"
+    if hasCat:
+        result = f"{result} AND v.hascat"
+    if hasDog:
+        result = f"{result} AND v.hasdog"
+    return result
 
 def get_data(body):
     try:
