@@ -16,3 +16,4 @@ scipy~=1.5.2
 matplotlib~=3.3.2
 pycairo~=1.19.1
 pyarrow~=0.17.0
+mysql-connector~=2.2.9

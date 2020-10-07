@@ -2,8 +2,20 @@ from snowflake import connector
 from dotenv import load_dotenv
 from os import environ
 import mysql.connector
+from mysql.connector.constants import ClientFlag
 
 load_dotenv(dotenv_path="../.env")
+
+tables = [
+    # 'content',
+    'viewers',
+    # 'engagement'
+]
+column_names = [
+    # '(@dummy, CONTENTSK, PROGRAMCATEGORY, PROGRAMNAME, PROGRAMTYPESUMMARY, NHIPROGRAMTYPE, EPISODES, DURATION, PIDS, PRIMARYNETWORK)',
+    '(@dummy, PERSONKEY, FIRST_RESPONDENTWEIGHTREPORTDATE, LAST_RESPONDENTWEIGHTREPORTDATE, INTABWEIGHT, AGE, GENDER, RACE, PERSON_EDUCATION, PERSON_EDUCATION_LEVEL, COUNTYSIZE, COUNTY_SIZE_LEVEL, HOUSEHOLDINCOME, LANGUAGEOFHOUSEHOLD, HEADOFHOUSHOLD_EDUCATION_LEVEL, HOUSEHOLDSIZE, NUMBEROFCHILDREN, NUMBEROFADULTS, NUMBEROFINCOMES, @HASCAT, @HASDOG, @HASSVODSUBSCRIPTION, @HASNETFLIXSUBSCRIPTION, @HASHULUSUBSCRIPTION, @HASAMAZONPRIMESUBSCRIPTION, @WEEKLY_VIEWING_MINUTES)',
+    # '(@dummy, CONTENTSK, PERSONKEY, ENGAGEMENT)'
+]
 
 user = environ['SNOWFLAKE_USER']
 password = environ['SNOWFLAKE_PASS']
@@ -15,30 +27,39 @@ schema='ENGAGEMENT'
 mySql = {
   'user': 'python',
   'password': 'python',
-  'host': '127.0.0.1',
-  'database': 'content_engagement'
+  'host': 'localhost',
+  'database': 'content_engagement',
+  'auth_plugin': 'mysql_native_password',
+  'client_flags': [ClientFlag.LOCAL_FILES]
 }
 
-def extract(tableName):
+def extract(table_name):
     conn = connector.connect(user=user, password=password, account=account)
     conn.cursor().execute(f"USE WAREHOUSE {warehouse}")
     conn.cursor().execute(f"USE {database}")
     conn.cursor().execute(f"USE SCHEMA {schema}")
     query_output = conn.cursor().execute(f"""
-        select top 100 * from engagement.{tableName};
+        select * from engagement.{table_name};
     """)
-    query_output.fetch_pandas_all().to_csv(f"/Users/sletkeman/mysql/{tableName}.csv")
+    query_output.fetch_pandas_all().to_csv(f"{table_name}.csv")
     conn.close()
 
-def load(tableName):
+def load(table_name, columns):
     cnx = mysql.connector.connect(**mySql)
     cursor = cnx.cursor()
-    query = ("""
-        LOAD DATA INFILE '/Users/sletkeman/mysql/{tableName}.csv' INTO TABLE content
+    query = (f"""
+        LOAD DATA INFILE '/Users/sletkeman/practicum/{table_name}.csv' INTO TABLE {table_name}
         FIELDS TERMINATED BY ','
         ENCLOSED BY '"'
         IGNORE 1 LINES
-        (@dummy, CONTENTSK, PROGRAMCATEGORY, PROGRAMNAME, PROGRAMTYPESUMMARY, NHIPROGRAMTYPE, EPISODES, DURATION, PIDS, PRIMARYNETWORK );
+        {columns}
+        SET HASCAT = (@HASCAT = 'True'),
+            HASDOG = (@HASDOG = 'True'),
+            HASSVODSUBSCRIPTION = (@HASSVODSUBSCRIPTION = 'True'),
+            HASNETFLIXSUBSCRIPTION = (@HASNETFLIXSUBSCRIPTION = 'True'),
+            HASHULUSUBSCRIPTION = (@HASHULUSUBSCRIPTION = 'True'), 
+            HASAMAZONPRIMESUBSCRIPTION = (@HASAMAZONPRIMESUBSCRIPTION = 'True'),
+            WEEKLY_VIEWING_MINUTES = IF(@WEEKLY_VIEWING_MINUTES = '', 0.0, @WEEKLY_VIEWING_MINUTES)
     """)
     cursor.execute(query)
     cnx.commit()
@@ -46,8 +67,9 @@ def load(tableName):
     cnx.close()
 
 try:
-    tableName = 'content'
-    extract(tableName)
-    # load(tableName)
+    for i, name in enumerate(tables):
+        print(f"{i}: {name}")
+        # extract(name)
+        load(name, column_names[i])
 except Exception as error:
     print(error)
