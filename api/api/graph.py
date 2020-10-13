@@ -4,6 +4,7 @@ sln -s /usr/local/Cellar/graph-tool/2.33/lib/python3.8/site-packages/graph_tool 
 """
 
 from flask import abort
+from json import dumps
 from operator import itemgetter
 from services.graphtool import (
     build_block_model,
@@ -16,9 +17,9 @@ def get_condition(body):
       gender, useAge, age, useIncome, income, useChildren, children, useAdults, adults, \
       useViewingMinutes, viewingMinutes, countySize, educationLevel, language, size, hasCat, hasDog \
       = itemgetter('programName', 'programCategory', 'programTypeSummary', 'programType', 'network',
-        'gender', 'useAge', 'age', 'useIncome', 'income', 'useChildren', 'children', 'useAdults',
-        'adults', 'countySize', 'educationLevel', 'language', 'useViewingMinutes', 'viewingMinutes',
-        'size', 'hasCat', 'hasDog')(body)
+        'gender', 'useAge', 'age', 'useIncome', 'income', 'useChildren', 'children', 'useAdults', 'adults',
+        'useViewingMinutes', 'viewingMinutes', 'countySize', 'educationLevel', 'language', 'size', 'hasCat', 'hasDog'
+        )(body)
 
     # content
     if programName:
@@ -38,7 +39,7 @@ def get_condition(body):
 
     # viewers
     if gender:
-        result = f"{result} AND v.gender = '{gender}'"
+        result = f"{result} AND v.gender = '{gender[0]}'"
     if useAge:
         result = f"{result} AND v.age >= {age[0]} AND v.age <= {age[1]}"
     if useIncome:
@@ -52,7 +53,7 @@ def get_condition(body):
     if countySize:
         result = f"{result} AND v.country_size_level = '{countySize}'"
     if educationLevel:
-        result = f"{result} AND v.person_education_level = '{educationLevel}'"
+        result = f"{result} AND v.person_education_level = {educationLevel}"
     if language:
         result = f"{result} AND v.languageofhousehold = '{language}'"
     if size:
@@ -69,12 +70,11 @@ def get_data(body):
           itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
         condition = get_condition(body)
         print(condition)
-        # if useNestedModel:
-        #     return build_nest_block_model(condition, sampleSize, useDegreeCorrection, useEdgeWeights)
-        # else:
-        #     return build_block_model(condition, sampleSize, useDegreeCorrection, useEdgeWeights)
-        return 'Yay!', 200
+        if useNestedModel:
+            return build_nest_block_model(condition, sampleSize, useDegreeCorrection, useEdgeWeights), 200
+        else:
+            return build_block_model(condition, sampleSize, useDegreeCorrection, useEdgeWeights), 200
     except Exception as ex:
-        abort(500, ex.args[1])
+        abort(500, str(ex))
 
 

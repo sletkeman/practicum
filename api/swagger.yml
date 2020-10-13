@@ -25,3 +25,9 @@ paths:
       responses:
         200:
           description: Successfully retrieved the data
+  /viewers:
+    get:
+      operationId: api.test.fetch_viewers
+      responses:
+        200:
+          description: Successfully retrieved the data

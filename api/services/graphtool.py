@@ -1,7 +1,7 @@
 import graph_tool.all as gt
 import numpy as np
 
-from services.snowflake import (
+from services.mysql import (
     get_viewers, get_content, get_engagement
 )
 
@@ -57,24 +57,24 @@ def build_tree(condition, size):
     for v in viewers:
         vertex = g.add_vertex()
         v_is_content[vertex] = False
-        v_person_key[vertex] = v['PERSONKEY']
-        v_race[vertex] = v['RACE']
-        v_gender[vertex] = v['GENDER']
-        v_age[vertex] = v['AGE']
-        viewers_map[v['PERSONKEY']] = vertex
+        v_person_key[vertex] = v.get('personkey')
+        # v_race[vertex] = v.get('RACE')
+        # v_gender[vertex] = v.get('GENDER')
+        # v_age[vertex] = v.get('AGE')
+        viewers_map[v.get('personkey')] = vertex
     for c in content:
         vertex = g.add_vertex()
         v_is_content[vertex] = True
-        v_content_sk[vertex] = c['CONTENTSK']
-        v_program_name[vertex] = c['PROGRAMNAME']
-        v_program_type[vertex] = c['NHIPROGRAMTYPE']
-        v_program_summary[vertex] = c['PROGRAMTYPESUMMARY']
-        content_map[c['CONTENTSK']] = vertex
+        v_content_sk[vertex] = c.get('contentsk')
+        v_program_name[vertex] = c.get('programname')
+        v_program_type[vertex] = c.get('nhiprogramtype')
+        v_program_summary[vertex] = c.get('programtypesummary')
+        content_map[c.get('contentsk')] = vertex
     for e in engagement:
-        v = viewers_map[e['PERSONKEY']]
-        c = content_map[e['CONTENTSK']]
+        v = viewers_map[e.get('personkey')]
+        c = content_map[e.get('contentsk')]
         edge = g.add_edge(v, c)
-        eng = e['ENGAGEMENT']
+        eng = e.get('engagement')
         e_engagement[edge] = eng if eng <= 100 else 100
     return g
 
