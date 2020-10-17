@@ -16,7 +16,7 @@ v_program_type = None
 v_program_summary = None
 e_engagement = None
 
-def build_tree(condition, size):
+def build_tree(viewer_condition, content_condition, size):
     global v_is_content
     global v_person_key
     global v_content_sk
@@ -28,7 +28,7 @@ def build_tree(condition, size):
     global v_gender
     global v_age
 
-    viewers = get_viewers(size, condition)
+    viewers = get_viewers(size, viewer_condition, content_condition)
     engagement = get_engagement(viewers)
     content = get_content(viewers)
     viewers_map = {}
@@ -78,8 +78,8 @@ def build_tree(condition, size):
         e_engagement[edge] = eng if eng <= 100 else 100
     return g
 
-def build_block_model(condition, size, use_deg_corr, use_edge_weights):
-    g = build_tree(condition, size)
+def build_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
+    g = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_blockmodel_dl(g
         , state_args=state_args
@@ -112,8 +112,8 @@ def recurse(max_level, blocks, v, level, i, results):
             results[b[i]] = {}
         recurse(max_level, blocks, v, level + 1, b[i], results[b[i]])
 
-def build_nest_block_model(condition, size, use_deg_corr, use_edge_weights):
-    g = build_tree(condition, size)
+def build_nest_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
+    g = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_nested_blockmodel_dl(g
         , state_args=state_args
