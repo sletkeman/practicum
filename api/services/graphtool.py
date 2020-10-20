@@ -7,7 +7,9 @@ from services.mysql import (
 
 v_is_content = None
 v_person_key = None
-v_race = None
+v_education = None
+v_income = None
+v_county_size = None
 v_gender = None
 v_age = None
 v_content_sk = None
@@ -24,7 +26,9 @@ def build_tree(viewer_condition, content_condition, size):
     global v_program_type
     global v_program_summary
     global e_engagement
-    global v_race
+    global v_education
+    global v_income
+    global v_county_size
     global v_gender
     global v_age
 
@@ -36,7 +40,9 @@ def build_tree(viewer_condition, content_condition, size):
     g = gt.Graph()
     v_is_content = g.new_vertex_property("bool")
     v_person_key = g.new_vertex_property("string")
-    v_race = g.new_vertex_property("string")
+    v_education = g.new_vertex_property("string")
+    v_county_size = g.new_vertex_property("string")
+    v_income= g.new_vertex_property("int")
     v_gender = g.new_vertex_property("string")
     v_age = g.new_vertex_property("string")
     v_content_sk = g.new_vertex_property("int")
@@ -46,7 +52,9 @@ def build_tree(viewer_condition, content_condition, size):
     e_engagement = g.new_edge_property("int")
     g.vertex_properties["is_content"] = v_is_content
     g.vertex_properties['person_key'] = v_person_key
-    g.vertex_properties['race'] = v_race
+    g.vertex_properties['education'] = v_education
+    g.vertex_properties['county_size'] = v_county_size
+    g.vertex_properties['income'] = v_income
     g.vertex_properties['gender'] = v_gender
     g.vertex_properties['age'] = v_age
     g.vertex_properties['content_sk'] = v_content_sk
@@ -58,9 +66,11 @@ def build_tree(viewer_condition, content_condition, size):
         vertex = g.add_vertex()
         v_is_content[vertex] = False
         v_person_key[vertex] = v.get('personkey')
-        # v_race[vertex] = v.get('RACE')
-        # v_gender[vertex] = v.get('GENDER')
-        # v_age[vertex] = v.get('AGE')
+        v_gender[vertex] = v.get('gender')
+        v_age[vertex] = v.get('age')
+        v_education[vertex] = v.get('person_education')
+        v_income[vertex] = v.get('householdincome')
+        v_county_size[vertex] = v.get('countysize')
         viewers_map[v.get('personkey')] = vertex
     for c in content:
         vertex = g.add_vertex()
@@ -78,6 +88,26 @@ def build_tree(viewer_condition, content_condition, size):
         e_engagement[edge] = eng if eng <= 100 else 100
     return g
 
+def get_result_item(v):
+    if v_is_content[v]:
+        return {
+            "type": "content",
+            "content_key": v_content_sk[v],
+            "program_name": v_program_name[v],
+            "program_type": v_program_type[v],
+            "program_summary": v_program_summary[v] 
+        }
+    else:
+        return {
+            "type": "viewer",
+            "person_key": v_person_key[v],
+            "age": v_age[v],
+            "gender": v_gender[v],
+            "county_size": v_county_size[v],
+            "income": v_income[v],
+            "education": v_education[v]
+        }
+
 def build_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
     g = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
@@ -92,25 +122,25 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
     for i, v in enumerate(verticies):
         if b[i] not in results:
             results[b[i]] = []
-        if v_is_content[v]:
-            results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
-        else:
-            results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
+        results[b[i]].append(get_result_item(v))
     return results
 
-def recurse(max_level, blocks, v, level, i, results):
-    b = blocks[level]
-    if level + 1 == max_level:
-        if b[i] not in results:
-            results[b[i]] = []
-        if v_is_content[v]:
-            results[b[i]].append(f"C: {v_program_name[v]} ~~ {v_program_type[v]} ~~ {v_program_summary[v]}")
-        else:
-            results[b[i]].append(f"V: {v_person_key[v]} ~~ {v_age[v]} ~~ {v_gender[v]} ~~ {v_race[v]}")
+def recurseDown(item, results):
+    if type(item[1]) is tuple:
+        if item[0] not in results:
+            results[item[0]] = {}
+        recurseDown(item[1], results[item[0]])
     else:
-        if b[i] not in results:
-            results[b[i]] = {}
-        recurse(max_level, blocks, v, level + 1, b[i], results[b[i]])
+        if item[0] not in results:
+            results[item[0]] = []
+        results[item[0]].append(get_result_item(item[1]))
+
+def recurseUp(max_level, blocks, level, i, item, results):
+    if level == max_level:
+        recurseDown(item, results)
+    else:
+        b = blocks[level]
+        recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results)
 
 def build_nest_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
     g = build_tree(viewer_condition, content_condition, size)
@@ -135,5 +165,5 @@ def build_nest_block_model(viewer_condition, content_condition, size, use_deg_co
     verticies = g.get_vertices()
     results = {}
     for i, v in enumerate(verticies):
-        recurse(len(blocks), blocks, v, 0, i, results)
+        recurseUp(len(blocks), blocks, 0, i, v, results)
     return results

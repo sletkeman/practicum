@@ -4,7 +4,7 @@ sln -s /usr/local/Cellar/graph-tool/2.33/lib/python3.8/site-packages/graph_tool 
 """
 
 from flask import abort
-from json import dumps
+from json import dump
 from operator import itemgetter
 from services.graphtool import (
     build_block_model,
@@ -70,10 +70,14 @@ def get_data(body):
         useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
           itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
         viewer_condition, content_condition = get_condition(body)
+        result = {}
         if useNestedModel:
-            return build_nest_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights), 200
+            result = build_nest_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
         else:
-            return build_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights), 200
+            result = build_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+        with open('result.json', 'w') as fp:
+            dump(result, fp)
+        return result, 200
     except Exception as ex:
         abort(500, str(ex))
 
