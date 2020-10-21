@@ -2,13 +2,13 @@ import Vue from "vue";
 import Vuex from "vuex";
 
 import common from "./modules/common";
-import recipe from "./modules/recipe";
+import data from "./modules/data";
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   modules: {
     common,
-    recipe
+    data
   }
 });

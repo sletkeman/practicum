@@ -33,8 +33,13 @@ def build_tree(viewer_condition, content_condition, size):
     global v_age
 
     viewers = get_viewers(size, viewer_condition, content_condition)
+    print(f"Viewers: {len(viewers)}")
+    if (len(viewers) < int(size)):
+        raise Exception("Too few viewers were found using the given condtions")
     engagement = get_engagement(viewers)
+    print(f"Engagement: {len(engagement)}")
     content = get_content(viewers)
+    print(f"Content: {len(content)}")
     viewers_map = {}
     content_map = {}
     g = gt.Graph()
@@ -125,25 +130,38 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
         results[b[i]].append(get_result_item(v))
     return results
 
-def recurseDown(item, results):
-    if type(item[1]) is tuple:
-        if item[0] not in results:
-            results[item[0]] = {}
-        recurseDown(item[1], results[item[0]])
+def recurseDown(item, results, counter):
+    matching = [x for x in results if x.get('name') == item[0]]
+    children = []
+    if len(matching) == 0:
+        results.append({
+            "id": counter,
+            "name": item[0],
+            "children": children
+        })
     else:
-        if item[0] not in results:
-            results[item[0]] = []
-        results[item[0]].append(get_result_item(item[1]))
+        children = results[0].get("children")
 
-def recurseUp(max_level, blocks, level, i, item, results):
+    if type(item[1]) is tuple:
+        recurseDown(item[1], children, counter + 1)
+    else:
+        if len(children) == 0:
+            children.append({ viewers: [], content: []})
+        if v_is_content[item[1]]:
+            children[0]['content'].append(get_result_item(item[1]))
+        else:
+            children[0]['viewers'].append(get_result_item(item[1]))
+
+def recurseUp(max_level, blocks, level, i, item, results, counter):
     if level == max_level:
-        recurseDown(item, results)
+        recurseDown(item, results, counter + 1)
     else:
         b = blocks[level]
-        recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results)
+        recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter)
 
 def build_nest_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
     g = build_tree(viewer_condition, content_condition, size)
+    print("building model")
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_nested_blockmodel_dl(g
         , state_args=state_args
@@ -157,13 +175,14 @@ def build_nest_block_model(viewer_condition, content_condition, size, use_deg_co
         #     ret = state.multiflip_mcmc_sweep(niter=10, beta=np.inf)
         # S2 = state.entropy()
         # print("Improvement:", S2 - S1)
-
+    print("preparing results")
     levels = state.get_levels()
     blocks = []
     for level in levels:
         blocks.append(level.get_blocks())
     verticies = g.get_vertices()
-    results = {}
+    results = []
+    counter = 0
     for i, v in enumerate(verticies):
-        recurseUp(len(blocks), blocks, 0, i, v, results)
+        recurseUp(len(blocks), blocks, 0, i, v, results, counter)
     return results

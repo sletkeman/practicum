@@ -4,7 +4,7 @@ sln -s /usr/local/Cellar/graph-tool/2.33/lib/python3.8/site-packages/graph_tool 
 """
 
 from flask import abort
-from json import dump
+from json import dump, load
 from operator import itemgetter
 from services.graphtool import (
     build_block_model,
@@ -81,4 +81,10 @@ def get_data(body):
     except Exception as ex:
         abort(500, str(ex))
 
-
+# def get_data(body):
+#     try:
+#         f = open('result.json')
+#         data = load(f)
+#         return data, 200
+#     except Exception as ex:
+#         abort(500, str(ex))

@@ -255,8 +255,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { getResults } from "../services/api";
+import { mapState, mapActions } from "vuex";
 
 export default {
   name: "SearchForm",
@@ -579,8 +578,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions(["GET_DATA"]),
     submit() {
-      getResults(this.form);
+      this.GET_DATA([this.form]);
     }
   },
   computed: {
