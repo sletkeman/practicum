@@ -3,14 +3,21 @@
 
 from util.snowflake import SnowflakeDatabase
 
-def get_viewers(sample_size, condition):
+def get_viewers(sample_size, viewer_condition, content_condition):
     """Gets the prospects"""
     with SnowflakeDatabase() as sno:
         query = f"""
-            select personkey, gender, age, race
-            from engagement.viewers v sample ({sample_size} rows)
-            where {condition}
+            WITH viewers AS (
+                SELECT v.personkey, age, gender, person_education, countysize, householdincome
+                FROM engagement.viewers v
+                    JOIN engagement.ENGAGEMENT e ON e.personkey = v.personkey
+                    JOIN engagement.CONTENT c ON e.contentsk = c.contentsk
+                WHERE {viewer_condition} AND {content_condition}
+            )
+            SELECT personkey, age, gender, person_education, countysize, householdincome
+            FROM viewers SAMPLE({sample_size} rows)
         """
+        print(query)
         return sno.query(query)
 
 def get_content(viewers):

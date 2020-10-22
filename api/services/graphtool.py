@@ -1,9 +1,16 @@
 import graph_tool.all as gt
 import numpy as np
 
-from services.mysql import (
+# from services.mysql import (
+#     get_viewers, get_content, get_engagement
+# )
+
+from services.snowflake import (
     get_viewers, get_content, get_engagement
 )
+
+def case(key):
+    return key.upper()
 
 v_is_content = None
 v_person_key = None
@@ -70,26 +77,26 @@ def build_tree(viewer_condition, content_condition, size):
     for v in viewers:
         vertex = g.add_vertex()
         v_is_content[vertex] = False
-        v_person_key[vertex] = v.get('personkey')
-        v_gender[vertex] = v.get('gender')
-        v_age[vertex] = v.get('age')
-        v_education[vertex] = v.get('person_education')
-        v_income[vertex] = v.get('householdincome')
-        v_county_size[vertex] = v.get('countysize')
-        viewers_map[v.get('personkey')] = vertex
+        v_person_key[vertex] = v.get(case('personkey'))
+        v_gender[vertex] = v.get(case('gender'))
+        v_age[vertex] = v.get(case('age'))
+        v_education[vertex] = v.get(case('person_education'))
+        v_income[vertex] = v.get(case('householdincome'))
+        v_county_size[vertex] = v.get(case('countysize'))
+        viewers_map[v.get(case('personkey'))] = vertex
     for c in content:
         vertex = g.add_vertex()
         v_is_content[vertex] = True
-        v_content_sk[vertex] = c.get('contentsk')
-        v_program_name[vertex] = c.get('programname')
-        v_program_type[vertex] = c.get('nhiprogramtype')
-        v_program_summary[vertex] = c.get('programtypesummary')
-        content_map[c.get('contentsk')] = vertex
+        v_content_sk[vertex] = c.get(case('contentsk'))
+        v_program_name[vertex] = c.get(case('programname'))
+        v_program_type[vertex] = c.get(case('nhiprogramtype'))
+        v_program_summary[vertex] = c.get(case('programtypesummary'))
+        content_map[c.get(case('contentsk'))] = vertex
     for e in engagement:
-        v = viewers_map[e.get('personkey')]
-        c = content_map[e.get('contentsk')]
+        v = viewers_map[e.get(case('personkey'))]
+        c = content_map[e.get(case('contentsk'))]
         edge = g.add_edge(v, c)
-        eng = e.get('engagement')
+        eng = e.get(case('engagement'))
         e_engagement[edge] = eng if eng <= 100 else 100
     return g
 
@@ -134,8 +141,9 @@ def recurseDown(item, results, counter):
     matching = [x for x in results if x.get('name') == item[0]]
     children = []
     if len(matching) == 0:
+        counter['count'] += 1
         results.append({
-            "id": counter,
+            "id": counter.get('count'),
             "name": item[0],
             "children": children
         })
@@ -143,18 +151,30 @@ def recurseDown(item, results, counter):
         children = results[0].get("children")
 
     if type(item[1]) is tuple:
-        recurseDown(item[1], children, counter + 1)
+        recurseDown(item[1], children, counter)
     else:
-        if len(children) == 0:
-            children.append({ viewers: [], content: []})
         if v_is_content[item[1]]:
-            children[0]['content'].append(get_result_item(item[1]))
+            match = [x for x in children if x.get('name') == 'Content']
+            content = {"content": []}
+            if match:
+                content = match[0]['children'][0]
+            else:
+                counter['count'] += 1
+                children.append({ "id": counter.get('count'), 'name': 'Content', 'children': [content]})
+            content['content'].append(get_result_item(item[1]))
         else:
-            children[0]['viewers'].append(get_result_item(item[1]))
+            match = [x for x in children if x.get('name') == 'Viewers']
+            viewers = {"viewers": []}
+            if match:
+                viewers = match[0]['children'][0]
+            else:
+                counter['count'] += 1
+                children.append({ "id": counter.get('count'), 'name': 'Viewers', 'children': [viewers]})
+            viewers["viewers"].append(get_result_item(item[1]))
 
 def recurseUp(max_level, blocks, level, i, item, results, counter):
     if level == max_level:
-        recurseDown(item, results, counter + 1)
+        recurseDown(item, results, counter)
     else:
         b = blocks[level]
         recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter)
@@ -182,7 +202,7 @@ def build_nest_block_model(viewer_condition, content_condition, size, use_deg_co
         blocks.append(level.get_blocks())
     verticies = g.get_vertices()
     results = []
-    counter = 0
+    counter = { "count": 0 }
     for i, v in enumerate(verticies):
         recurseUp(len(blocks), blocks, 0, i, v, results, counter)
     return results

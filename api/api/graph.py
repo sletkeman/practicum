@@ -67,24 +67,23 @@ def get_condition(body):
 
 def get_data(body):
     try:
-        useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
-          itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
-        viewer_condition, content_condition = get_condition(body)
-        result = {}
-        if useNestedModel:
-            result = build_nest_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+        if True:
+        # if False:
+            useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
+              itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
+            viewer_condition, content_condition = get_condition(body)
+            result = {}
+            if useNestedModel:
+                result = build_nest_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+            else:
+                result = build_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+            with open('result.json', 'w') as fp:
+                dump(result, fp)
+            return result, 200
         else:
-            result = build_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
-        with open('result.json', 'w') as fp:
-            dump(result, fp)
-        return result, 200
+            f = open('result.json')
+            data = load(f)
+            return data, 200
     except Exception as ex:
+        print(ex)
         abort(500, str(ex))
-
-# def get_data(body):
-#     try:
-#         f = open('result.json')
-#         data = load(f)
-#         return data, 200
-#     except Exception as ex:
-#         abort(500, str(ex))
