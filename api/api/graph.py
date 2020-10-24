@@ -12,8 +12,8 @@ from services.graphtool import (
 )
 
 def get_condition(body):
-    viewer_condition = 'TRUE'
-    content_condition = 'TRUE'
+    viewer_condition = ''
+    content_condition = ''
     programName, programCategory, programTypeSummary, programType, network, \
       gender, useAge, age, useIncome, income, useChildren, children, useAdults, adults, \
       useViewingMinutes, viewingMinutes, countySize, educationLevel, language, size, hasCat, hasDog \

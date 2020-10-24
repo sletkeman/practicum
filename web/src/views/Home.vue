@@ -1,11 +1,13 @@
 <template>
-  <v-treeview :items="data">
+  <v-treeview :items="data" dense>
     <template v-slot:label="{ item }">
       <div v-if="Object.keys(item).includes('content')">
         <v-data-table
           :headers="contentHeaders"
           :items="item.content"
           :disable-pagination="true"
+          :dense="true"
+          :hide-default-footer="true"
         ></v-data-table>
       </div>
       <div v-else-if="Object.keys(item).includes('viewers')">
@@ -13,10 +15,18 @@
           :headers="viewerHeaders"
           :items="item.viewers"
           :disable-pagination="true"
+          :dense="true"
+          :hide-default-footer="true"
         ></v-data-table>
       </div>
+      <div v-else-if="item.children[0].content">
+        {{ item.name }} ({{ item.children[0].content.length }})
+      </div>
+      <div v-else-if="item.children[0].viewers">
+        {{ item.name }} ({{ item.children[0].viewers.length }})
+      </div>
       <div v-else>
-        {{ item.name }} - {{ item.id }} ({{ item.children.length }} items)
+        {{ item.name }} ({{ item.children.length }})
       </div>
     </template>
   </v-treeview>

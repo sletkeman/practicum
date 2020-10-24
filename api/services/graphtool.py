@@ -39,13 +39,13 @@ def build_tree(viewer_condition, content_condition, size):
     global v_gender
     global v_age
 
-    viewers = get_viewers(size, viewer_condition, content_condition)
+    viewers = get_viewers(size, viewer_condition)
     print(f"Viewers: {len(viewers)}")
     if (len(viewers) < int(size)):
         raise Exception("Too few viewers were found using the given condtions")
-    engagement = get_engagement(viewers)
+    engagement = get_engagement(viewers, content_condition)
     print(f"Engagement: {len(engagement)}")
-    content = get_content(viewers)
+    content = get_content(viewers, content_condition)
     print(f"Content: {len(content)}")
     viewers_map = {}
     content_map = {}
@@ -124,17 +124,44 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
     g = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_blockmodel_dl(g
-        , state_args=state_args
+        # , state_args=state_args
         , deg_corr=use_deg_corr
     )
     print(state.entropy())
     b = state.get_blocks()
     verticies = g.get_vertices()
-    results = {}
+    results = []
+    counter = { "count": 0 }
     for i, v in enumerate(verticies):
-        if b[i] not in results:
-            results[b[i]] = []
-        results[b[i]].append(get_result_item(v))
+        matching = [x for x in results if x.get('name') == b[i]]
+        children = []
+        if len(matching) == 0:
+            counter['count'] += 1
+            results.append({
+                "id": counter.get('count'),
+                "name": b[i],
+                "children": children
+            })
+        else:
+            children = results[0].get("children")
+        if v_is_content[v]:
+            match = [x for x in children if x.get('name') == 'Content']
+            content = {"content": []}
+            if match:
+                content = match[0]['children'][0]
+            else:
+                counter['count'] += 1
+                children.append({ "id": counter.get('count'), 'name': 'Content', 'children': [content]})
+            content['content'].append(get_result_item(v))
+        else:
+            match = [x for x in children if x.get('name') == 'Viewers']
+            viewers = {"viewers": []}
+            if match:
+                viewers = match[0]['children'][0]
+            else:
+                counter['count'] += 1
+                children.append({ "id": counter.get('count'), 'name': 'Viewers', 'children': [viewers]})
+            viewers["viewers"].append(get_result_item(v))
     return results
 
 def recurseDown(item, results, counter):
