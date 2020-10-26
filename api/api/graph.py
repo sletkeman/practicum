@@ -51,12 +51,15 @@ def get_condition(body):
         viewer_condition = f"{viewer_condition} AND v.numberofadults >= {adults[0]} AND v.numberofadults <= {adults[1]}"
     if  useViewingMinutes:
         viewer_condition = f"{viewer_condition} AND v.weekly_viewing_minutes >= {viewingMinutes[0]} AND v.weekly_viewing_minutes <= {viewingMinutes[1]}" 
-    if countySize:
-        viewer_condition = f"{viewer_condition} AND v.country_size_level = '{countySize}'"
+    if countySize or countySize == 0:
+        joined = "','".join(countySize)
+        viewer_condition = f"{viewer_condition} AND v.county_size_level in ('{joined}')"
     if educationLevel:
-        viewer_condition = f"{viewer_condition} AND v.person_education_level = {educationLevel}"
+        joined = "','".join(educationLevel)
+        viewer_condition = f"{viewer_condition} AND v.person_education_level in ('{joined}')"
     if language:
-        viewer_condition = f"{viewer_condition} AND v.languageofhousehold = '{language}'"
+        joined = "','".join(language)
+        viewer_condition = f"{viewer_condition} AND v.languageofhousehold in ('{joined}')"
     if size:
         viewer_condition = f"{viewer_condition} AND v.householdsize = '{size}'"
     if hasCat:
@@ -67,8 +70,8 @@ def get_condition(body):
 
 def get_data(body):
     try:
-        if True:
-        # if False:
+        # if True:
+        if False:
             useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
               itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
             viewer_condition, content_condition = get_condition(body)

@@ -208,6 +208,7 @@
             item-text="name"
             item-value="value"
             dense
+            multiple
           ></v-select>
           <v-select
             label="Education Level"
@@ -218,6 +219,7 @@
             item-text="name"
             item-value="value"
             dense
+            multiple
           ></v-select>
           <v-select
             label="Language"
@@ -226,6 +228,7 @@
             :items="householdLanguage"
             :clearable="true"
             dense
+            multiple
           ></v-select>
           <v-select
             label="Household Size"
@@ -273,7 +276,7 @@ export default {
         useEdgeWeights: false,
         sampleSize: 250,
         programName: [],
-        programCategory: "",
+        programCategory: "SERIES",
         programTypeSummary: [],
         programType: [],
         network: [],
@@ -286,9 +289,9 @@ export default {
         children: [0, 9],
         useAdults: false,
         adults: [1, 9],
-        countySize: null,
-        educationLevel: null,
-        language: "",
+        countySize: [],
+        educationLevel: [],
+        language: [],
         useViewingMinutes: false,
         viewingMinutes: [0, 14000],
         size: "",

@@ -1,4 +1,13 @@
 <template>
+<div>
+  <v-card>
+    <v-card-title>
+    Entropy
+    </v-card-title>
+    <v-card-text>
+     {{entropy | round}}
+    </v-card-text>
+  </v-card>
   <v-treeview :items="data" dense>
     <template v-slot:label="{ item }">
       <div v-if="Object.keys(item).includes('content')">
@@ -25,11 +34,10 @@
       <div v-else-if="item.children[0].viewers">
         {{ item.name }} ({{ item.children[0].viewers.length }})
       </div>
-      <div v-else>
-        {{ item.name }} ({{ item.children.length }})
-      </div>
+      <div v-else>{{ item.name }} (viewers: {{ item.viewer_count }}, content: {{item.content_count}})</div>
     </template>
   </v-treeview>
+</div>
 </template>
 
 <script>
@@ -49,16 +57,23 @@ export default {
       contentHeaders: [
         { text: "Program Name", value: "program_name" },
         { text: "Program Summary", value: "program_summary" },
-        { text: "Program Type", value: "program_type" }
+        { text: "Program Type", value: "program_type" },
+        { text: "Primary Network", value: "network"}
       ]
     };
+  },
+  filters: {
+    round(val) {
+      return Math.round(val).toLocaleString()
+    }
   },
   methods: {
     ...mapActions([])
   },
   computed: {
     ...mapState({
-      data: state => state.data.data
+      data: state => state.data.data,
+      entropy: state => state.data.entropy
     })
   },
   async mounted() {}

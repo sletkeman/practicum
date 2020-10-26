@@ -4,14 +4,16 @@ import { SET_ERROR, SET_DATA } from "../mutations";
 import { getResults } from "../../services/api";
 
 const state = {
-  data: []
+  data: [],
+  entropy: 0
 };
 
 const actions = {
   async [GET_DATA]({ commit }, [formData]) {
     try {
       const { data } = await getResults(formData);
-      commit(SET_DATA, data);
+      const { entropy, results } = data;
+      commit(SET_DATA, [results, entropy] );
     } catch (error) {
       commit(SET_ERROR, error);
     }
@@ -19,8 +21,9 @@ const actions = {
 };
 
 const mutations = {
-  [SET_DATA](state, data) {
+  [SET_DATA](state, [data, entropy]) {
     state.data = data;
+    state.entropy = entropy;
   }
 };
 

@@ -15,7 +15,7 @@ def get_viewers(sample_size, viewer_condition):
 def get_content(viewers, content_condition):
     with SnowflakeDatabase() as sno:
         query = f"""
-            select distinct c.contentsk, c.programname, c.nhiprogramtype, c.programtypesummary
+            select distinct c.contentsk, c.programname, c.nhiprogramtype, c.programtypesummary, c.primarynetwork
             from engagement.engagement e
             join engagement.content c on e.contentsk = c.contentsk
             where e.personkey in ('{"','".join([v['PERSONKEY'] for v in viewers])}') {content_condition}
