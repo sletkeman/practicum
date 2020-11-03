@@ -28,6 +28,7 @@
     <v-main>
       <router-view />
     </v-main>
+    <v-footer :max-height="20" dark color="#b3a369" />
   </v-app>
 </template>
 
@@ -49,6 +50,11 @@ export default {
         message,
         position: "bottom-left"
       });
+    },
+    loading(next) {
+      if (!next) {
+        this.drawer = false;
+      }
     }
   },
   methods: {
@@ -58,7 +64,8 @@ export default {
   },
   computed: {
     ...mapState({
-      error: state => state.common.error
+      error: state => state.common.error,
+      loading: state => state.data.loading
     })
   }
 };

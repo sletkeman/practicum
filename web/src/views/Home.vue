@@ -1,52 +1,155 @@
 <template>
-<div>
-  <v-card>
-    <v-card-title>
-    Entropy
-    </v-card-title>
-    <v-card-text>
-     {{entropy | round}}
-    </v-card-text>
-  </v-card>
-  <v-treeview :items="data" dense>
-    <template v-slot:label="{ item }">
-      <div v-if="Object.keys(item).includes('content')">
-        <v-data-table
-          :headers="contentHeaders"
-          :items="item.content"
-          :disable-pagination="true"
-          :dense="true"
-          :hide-default-footer="true"
-        ></v-data-table>
-      </div>
-      <div v-else-if="Object.keys(item).includes('viewers')">
-        <v-data-table
-          :headers="viewerHeaders"
-          :items="item.viewers"
-          :disable-pagination="true"
-          :dense="true"
-          :hide-default-footer="true"
-        ></v-data-table>
-      </div>
-      <div v-else-if="item.children[0].content">
-        {{ item.name }} ({{ item.children[0].content.length }})
-      </div>
-      <div v-else-if="item.children[0].viewers">
-        {{ item.name }} ({{ item.children[0].viewers.length }})
-      </div>
-      <div v-else>{{ item.name }} (viewers: {{ item.viewer_count }}, content: {{item.content_count}})</div>
-    </template>
-  </v-treeview>
-</div>
+  <div style="height:100%">
+    <v-row style="height: 200px">
+      <!-- <v-col :cols="3">
+          <v-card-title>
+            Entropy
+          </v-card-title>
+          <v-card-text>
+            {{ entropy | round }}
+          </v-card-text>
+        </v-col> -->
+      <v-col :cols="3">
+        <div v-if="activeItem.viewer_count > 0">
+          Viewer
+          <v-row>
+            Average Age:
+            {{ (activeItem.viewer_aggs.age / activeItem.viewer_count) | round }}
+          </v-row>
+          <v-row>
+            Average Income:
+            {{
+              (activeItem.viewer_aggs.income / activeItem.viewer_count) | round
+            }}
+          </v-row>
+        </div>
+      </v-col>
+      <v-col :cols="3">
+        <div v-if="activeItem.viewer_count > 0">
+          <v-row>
+            <h4>Gender</h4>
+          </v-row>
+          <v-row>
+            <apexchart
+              :options="{
+                ...options,
+                xaxis: {
+                  categories: Object.keys(activeItem.viewer_aggs.gender)
+                }
+              }"
+              :series="[{ data: Object.values(activeItem.viewer_aggs.gender) }]"
+            ></apexchart>
+          </v-row>
+        </div>
+      </v-col>
+      <v-col :cols="3">
+        <div v-if="activeItem.viewer_count > 0">
+          <v-row>
+            <h4>
+              Education
+            </h4>
+          </v-row>
+          <v-row>
+            <apexchart
+              :options="{
+                ...options,
+                xaxis: {
+                  categories: Object.keys(activeItem.viewer_aggs.education)
+                }
+              }"
+              :series="[
+                { data: Object.values(activeItem.viewer_aggs.education) }
+              ]"
+            ></apexchart>
+          </v-row>
+        </div>
+      </v-col>
+      <v-col :cols="3">
+        <div v-if="activeItem.viewer_count > 0">
+          <v-row>
+            <h4>
+              County Size
+            </h4>
+          </v-row>
+          <v-row>
+            <apexchart
+              :options="{
+                ...options,
+                xaxis: {
+                  categories: Object.keys(activeItem.viewer_aggs.county_size)
+                }
+              }"
+              :series="[
+                { data: Object.values(activeItem.viewer_aggs.county_size) }
+              ]"
+            ></apexchart>
+          </v-row>
+        </div>
+      </v-col>
+      <!-- <v-col :cols="5">
+          <v-card-title>
+            Content
+          </v-card-title>
+          <v-card-text>
+            {{ this.activeItem.name }}
+          </v-card-text>
+        </v-col> -->
+    </v-row>
+    <hr />
+    <div v-if="loading" style="width:100%;text-align:center;padding-top:100px">
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    </div>
+    <v-treeview :items="data" dense :style="`height:${tableHeight}px`" v-else>
+      <template v-slot:label="{ item }">
+        <div v-if="Object.keys(item).includes('content')">
+          <v-data-table
+            :headers="contentHeaders"
+            :items="item.content"
+            :disable-pagination="true"
+            :dense="true"
+            :hide-default-footer="true"
+          ></v-data-table>
+        </div>
+        <div v-else-if="Object.keys(item).includes('viewers')">
+          <v-data-table
+            :headers="viewerHeaders"
+            :items="item.viewers"
+            :disable-pagination="true"
+            :dense="true"
+            :hide-default-footer="true"
+          ></v-data-table>
+        </div>
+        <div v-else-if="item.children[0].content">
+          {{ item.name }} - {{ item.children[0].content.length }}
+        </div>
+        <div v-else-if="item.children[0].viewers">
+          {{ item.name }} - {{ item.children[0].viewers.length }}
+        </div>
+        <div
+          v-else
+          @mouseenter="handleMouseEnter(item)"
+          @mouseleave="handleMouseLeave"
+        >
+          {{ item.name }} - viewers: {{ item.viewer_count }}, content:
+          {{ item.content_count }}
+        </div>
+      </template>
+    </v-treeview>
+  </div>
 </template>
 
 <script>
 import { mapState, mapActions } from "vuex";
 
+// import VueApexCharts from 'vue-apexcharts'
+
 export default {
   name: "Practicum",
   data() {
     return {
+      windowHeight: window.innerHeight,
+      sidebarOpen: true,
+      mini: false,
       viewerHeaders: [
         { text: "Age", value: "age" },
         { text: "Gender", value: "gender" },
@@ -58,24 +161,64 @@ export default {
         { text: "Program Name", value: "program_name" },
         { text: "Program Summary", value: "program_summary" },
         { text: "Program Type", value: "program_type" },
-        { text: "Primary Network", value: "network"}
-      ]
+        { text: "Primary Network", value: "network" }
+      ],
+      activeItem: {},
+      options: {
+        chart: {
+          type: "bar",
+          height: 150
+        },
+        plotOptions: {
+          bar: { horizontal: true }
+        },
+        dataLabels: { enabled: false }
+      },
+      county_size: {
+        "“A” county -25 largest metropolitan areas": 11,
+        "“B” county -over 150,000 in population, but not an “A” county": 10,
+        "“C” county -over 40,000 in population, but not an “A” or “B” county": 5,
+        "“D” county -all others": 3
+      }
     };
   },
   filters: {
     round(val) {
-      return Math.round(val).toLocaleString()
+      return Math.round(val).toLocaleString();
     }
   },
   methods: {
-    ...mapActions([])
+    ...mapActions([]),
+    handleMouseEnter(item) {
+      this.activeItem = item;
+    },
+    handleMouseLeave() {
+      // this.activeItem = {};
+    },
+    addSizeChangeListener() {
+      const self = this;
+      window.addEventListener("resize", () => {
+        self.windowHeight = window.innerHeight;
+      });
+    }
   },
   computed: {
     ...mapState({
       data: state => state.data.data,
-      entropy: state => state.data.entropy
-    })
+      entropy: state => state.data.entropy,
+      loading: state => state.data.loading
+    }),
+    tableHeight() {
+      return this.windowHeight - 280;
+    }
   },
-  async mounted() {}
+  async mounted() {
+    this.addSizeChangeListener();
+  }
 };
 </script>
+<style scoped>
+.v-treeview {
+  overflow-y: scroll;
+}
+</style>

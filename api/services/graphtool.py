@@ -126,6 +126,39 @@ def get_result_item(v):
             "education": v_education[v]
         }
 
+def addToCount(object, key):
+    if key in object:
+        object[key] += 1
+    else:
+        object[key] = 1
+
+def initAggregates():
+    content = {
+        "program_type": {},
+        "program_summary": {},
+        "network": {}
+    }
+    viewers = {
+        "age": 0,
+        "gender": {},
+        "county_size": {},
+        "income": 0,
+        "education": {}
+    }
+    return (content, viewers)
+
+def aggregate_content(content, aggs):
+    addToCount(aggs.get("program_type"), content.get("program_type"))
+    addToCount(aggs.get("program_summary"), content.get("program_summary"))
+    addToCount(aggs.get("network"), content.get("network"))
+
+def aggregate_viewers(viewers, aggs):
+    addToCount(aggs.get("gender"), viewers.get("gender"))
+    addToCount(aggs.get("county_size"), viewers.get("county_size"))
+    addToCount(aggs.get("education"), viewers.get("education"))
+    aggs['age'] += int(viewers.get("age"))
+    aggs['income'] += int(viewers.get("income"))
+
 def build_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
     g = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
@@ -151,12 +184,15 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
         else:
             # the block does not yet have an entry in the result set, so add one
             counter['count'] += 1
+            (content_aggs, viewer_aggs) = initAggregates()
             block = {
                 "id": counter.get('count'),
                 "name": b[i],
                 "children": children,
                 "viewer_count": 0,
-                "content_count": 0
+                "content_count": 0,
+                "viewer_aggs": viewer_aggs,
+                "content_aggs": content_aggs
             }
             results['results'].append(block)
 
@@ -172,7 +208,9 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
                 # create a new content list
                 counter['count'] += 1
                 children.append({ "id": counter.get('count'), 'name': 'Content', 'children': [content]})
-            content['content'].append(get_result_item(v))
+            result_item = get_result_item(v)
+            aggregate_content(result_item, block.get("content_aggs"))
+            content['content'].append(result_item)
         else:
             # the vertex is a viewer, so check whether we already have a list of viewers for this block
             block['viewer_count'] += 1
@@ -185,7 +223,9 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
                 # create a new viewer list
                 counter['count'] += 1
                 children.append({ "id": counter.get('count'), 'name': 'Viewers', 'children': [viewers]})
-            viewers["viewers"].append(get_result_item(v))
+            result_item = get_result_item(v)
+            aggregate_viewers(result_item, block.get("viewer_aggs"))
+            viewers["viewers"].append(result_item)
     return results
 
 def recurseDown(item, results, counter, is_content):
