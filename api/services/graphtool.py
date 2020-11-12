@@ -1,5 +1,7 @@
 import graph_tool.all as gt
 import numpy as np
+import pandas as pd
+from sklearn import preprocessing
 
 # from services.mysql import (
 #     get_viewers, get_content, get_engagement
@@ -46,6 +48,10 @@ def build_tree(viewer_condition, content_condition, size):
     if (len(viewers) < int(size)):
         raise Exception("Too few viewers were found using the given condtions")
     engagement = get_engagement(viewers, content_condition)
+    engagement_df = pd.DataFrame(engagement)
+    engagement_df.loc[engagement_df['ENGAGEMENT'] > 100, ['ENGAGEMENT']] = 100
+    engagement_df['SCALED_ENGAGEMENT'] = preprocessing.scale(engagement_df['ENGAGEMENT'])
+    # engagement_df.to_csv('engagement.csv')
     print(f"Engagement: {len(engagement)}")
     content = get_content(viewers, content_condition)
     print(f"Content: {len(content)}")
@@ -97,13 +103,13 @@ def build_tree(viewer_condition, content_condition, size):
         v_program_summary[vertex] = c.get(case('programtypesummary'))
         v_network[vertex] = c.get(case('primarynetwork'))
         content_map[c.get(case('contentsk'))] = vertex
-    for e in engagement:
+    for key, e in engagement_df.iterrows():
         v = viewers_map[e.get(case('personkey'))]
         c = content_map[e.get(case('contentsk'))]
         edge = g.add_edge(v, c)
-        eng = e.get(case('engagement'))
-        e_engagement[edge] = eng if eng <= 100 else 100
-    return g
+        eng = e.get('SCALED_ENGAGEMENT')
+        e_engagement[edge] = eng
+    return g, engagement_df
 
 def get_result_item(v):
     if v_is_content[v]:
@@ -160,17 +166,18 @@ def aggregate_viewers(viewers, aggs):
     aggs['income'] += int(viewers.get("income"))
 
 def build_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g = build_tree(viewer_condition, content_condition, size)
+    g, engagement_df = build_tree(viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_blockmodel_dl(g
-        # , state_args=state_args
+        , state_args=state_args
         , deg_corr=use_deg_corr
     )
     b = state.get_blocks()
     verticies = g.get_vertices()
     results = {
         "entropy": state.entropy(),
-        "results": []
+        "results": [],
+        "edges": engagement_df.to_dict('records')
     }
     counter = { "count": 0 }
     for i, v in enumerate(verticies):
@@ -228,7 +235,7 @@ def build_block_model(viewer_condition, content_condition, size, use_deg_corr, u
             viewers["viewers"].append(result_item)
     return results
 
-def recurseDown(item, results, counter, is_content):
+def recurseDown(item, results, counter, vertex):
     matching = [x for x in results if x.get('name') == item[0]]
     children = []
     block = {}
@@ -237,24 +244,30 @@ def recurseDown(item, results, counter, is_content):
         children = block.get("children")
     else:
         counter['count'] += 1
+        (content_aggs, viewer_aggs) = initAggregates()
         block = {
             "id": counter.get('count'),
             "name": item[0],
             "children": children,
             "viewer_count": 0,
-            "content_count": 0
+            "content_count": 0,
+            "viewer_aggs": viewer_aggs,
+            "content_aggs": content_aggs
         }
         results.append(block)
-
-    if is_content:
+    
+    result_item = get_result_item(vertex)
+    if v_is_content[vertex]:
         block['content_count'] += 1
+        aggregate_content(result_item, block.get("content_aggs"))
     else:
         block['viewer_count'] += 1
+        aggregate_viewers(result_item, block.get("viewer_aggs"))
 
     if type(item[1]) is tuple:
-        recurseDown(item[1], children, counter, is_content)
+        recurseDown(item[1], children, counter, vertex)
     else:
-        if is_content:
+        if v_is_content[vertex]:
             match = [x for x in children if x.get('name') == 'Content']
             content = {"content": []}
             if match:
@@ -262,7 +275,7 @@ def recurseDown(item, results, counter, is_content):
             else:
                 counter['count'] += 1
                 children.append({ "id": counter.get('count'), 'name': 'Content', 'children': [content]})
-            content['content'].append(get_result_item(item[1]))
+            content['content'].append(result_item)
         else:
             match = [x for x in children if x.get('name') == 'Viewers']
             viewers = {"viewers": []}
@@ -271,31 +284,32 @@ def recurseDown(item, results, counter, is_content):
             else:
                 counter['count'] += 1
                 children.append({ "id": counter.get('count'), 'name': 'Viewers', 'children': [viewers]})
-            viewers["viewers"].append(get_result_item(item[1]))
+            viewers["viewers"].append(result_item)
 
-def recurseUp(max_level, blocks, level, i, item, results, counter, is_content):
+def recurseUp(max_level, blocks, level, i, item, results, counter, vertex):
     if level == max_level:
-        recurseDown(item, results, counter, is_content)
+        recurseDown(item, results, counter, vertex)
     else:
         b = blocks[level]
-        recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter, is_content)
+        recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter, vertex)
 
 def build_nest_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g = build_tree(viewer_condition, content_condition, size)
+    g, engagement_df = build_tree(viewer_condition, content_condition, size)
     print("building model")
-    state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
+    state_args = dict(recs=[g.ep.engagement],rec_types=["real-normal"]) if use_edge_weights else dict()
     state = gt.minimize_nested_blockmodel_dl(g
         , state_args=state_args
         , deg_corr=use_deg_corr
     )
 
-        # expand and improve the model
-        # S1 = state.entropy()
-        # state = state.copy(bs=state.get_bs() + [np.zeros(1)] * 4, sampling=True)
-        # for i in range(100):
-        #     ret = state.multiflip_mcmc_sweep(niter=10, beta=np.inf)
-        # S2 = state.entropy()
-        # print("Improvement:", S2 - S1)
+    # expand and improve the model
+    # S1 = state.entropy()
+    # state = state.copy(bs=state.get_bs() + [np.zeros(1)] * 4, sampling=True)
+    # for i in range(100):
+    #     ret = state.multiflip_mcmc_sweep(niter=10, beta=np.inf)
+    # S2 = state.entropy()
+    # print("Improvement:", S2 - S1)
+    
     print("preparing results")
     levels = state.get_levels()
     blocks = []
@@ -304,9 +318,10 @@ def build_nest_block_model(viewer_condition, content_condition, size, use_deg_co
     verticies = g.get_vertices()
     results = {
         "entropy": state.entropy(),
-        "results": []
+        "results": [],
+        "edges": engagement_df.to_dict('records')
     }
     counter = { "count": 0 }
     for i, v in enumerate(verticies):
-        recurseUp(len(blocks), blocks, 0, i, v, results.get("results"), counter, v_is_content[v])
+        recurseUp(len(blocks), blocks, 0, i, v, results.get("results"), counter, v)
     return results

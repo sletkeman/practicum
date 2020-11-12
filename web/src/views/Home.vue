@@ -1,6 +1,9 @@
 <template>
   <div style="height:100%">
-    <v-row style="height: 300px">
+    <v-row
+      style="height: 300px"
+      v-if="viewerActive && activeItem.viewer_count > 0"
+    >
       <!-- <v-col :cols="3">
           <v-card-title>
             Entropy
@@ -9,154 +12,124 @@
             {{ entropy | round }}
           </v-card-text>
         </v-col> -->
-      <v-col :cols="3" style="padding-left:20px">
-        <div v-if="viewerActive && activeItem.viewer_count > 0">
+      <v-col :cols="3">
+        <div>
           <v-row>
             <v-col>
-            <h4>
-              Viewer
-            </h4>
+              <h4>
+                Viewer
+              </h4>
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-            Average Age:
-            {{ (activeItem.viewer_aggs.age / activeItem.viewer_count) | round }}
+              Average Age:
+              {{
+                (activeItem.viewer_aggs.age / activeItem.viewer_count) | round
+              }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-            Average Income:
-            {{
-              (activeItem.viewer_aggs.income / activeItem.viewer_count) | round
-            }}
+              Average Income:
+              {{
+                (activeItem.viewer_aggs.income / activeItem.viewer_count)
+                  | round
+              }}
             </v-col>
           </v-row>
         </div>
       </v-col>
       <v-col :cols="3">
-        <div v-if="viewerActive && activeItem.viewer_count > 0">
-          <v-row>
-            <h4>Gender</h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...viewerOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.viewer_aggs.gender)
-                }
-              }"
-              :series="[{ data: Object.values(activeItem.viewer_aggs.gender) }]"
-            ></apexchart>
-          </v-row>
-        </div>
+        <h4>Gender</h4>
+        <apexchart
+          :options="{
+            ...viewerOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.viewer_aggs.gender)
+            }
+          }"
+          :series="[{ data: Object.values(activeItem.viewer_aggs.gender) }]"
+        ></apexchart>
       </v-col>
       <v-col :cols="3">
-        <div v-if="viewerActive && activeItem.viewer_count > 0">
-          <v-row>
-            <h4>
-              Education
-            </h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...viewerOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.viewer_aggs.education)
-                }
-              }"
-              :series="[
-                { data: Object.values(activeItem.viewer_aggs.education) }
-              ]"
-            ></apexchart>
-          </v-row>
-        </div>
+        <h4>
+          Education
+        </h4>
+        <apexchart
+          :options="{
+            ...viewerOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.viewer_aggs.education)
+            }
+          }"
+          :series="[{ data: Object.values(activeItem.viewer_aggs.education) }]"
+        ></apexchart>
       </v-col>
       <v-col :cols="3">
-        <div v-if="viewerActive && activeItem.viewer_count > 0">
-          <v-row>
-            <h4>
-              County Size
-            </h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...viewerOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.viewer_aggs.county_size)
-                }
-              }"
-              :series="[
-                { data: Object.values(activeItem.viewer_aggs.county_size) }
-              ]"
-            ></apexchart>
-          </v-row>
-        </div>
+        <h4>
+          County Size
+        </h4>
+        <apexchart
+          :options="{
+            ...viewerOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.viewer_aggs.county_size)
+            }
+          }"
+          :series="[
+            { data: Object.values(activeItem.viewer_aggs.county_size) }
+          ]"
+        ></apexchart>
       </v-col>
-      <v-col :cols="4">
-        <div v-if="!viewerActive && activeItem.content_count > 0">
-          <v-row>
-            <h4>Program Summary</h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...contentOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.content_aggs.program_summary)
-                }
-              }"
-              :series="[{ data: Object.values(activeItem.content_aggs.program_summary) }]"
-            ></apexchart>
-          </v-row>
-        </div>
+    </v-row>
+    <v-row
+      class="contentRow"
+      v-if="!viewerActive && activeItem.content_count > 0"
+    >
+      <v-col :cols="4" class="contentCol">
+        <h4>Program Summary</h4>
+        <apexchart
+          :options="{
+            ...contentOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.content_aggs.program_summary)
+            }
+          }"
+          :series="[
+            { data: Object.values(activeItem.content_aggs.program_summary) }
+          ]"
+        ></apexchart>
       </v-col>
-      <v-col :cols="4">
-        <div v-if="!viewerActive && activeItem.content_count > 0">
-          <v-row>
-            <h4>
-              Program Type
-            </h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...contentOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.content_aggs.program_type)
-                }
-              }"
-              :series="[
-                { data: Object.values(activeItem.content_aggs.program_type) }
-              ]"
-            ></apexchart>
-          </v-row>
-        </div>
+      <v-col :cols="4" class="contentCol">
+        <h4>
+          Program Type
+        </h4>
+        <apexchart
+          :options="{
+            ...contentOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.content_aggs.program_type)
+            }
+          }"
+          :series="[
+            { data: Object.values(activeItem.content_aggs.program_type) }
+          ]"
+        ></apexchart>
       </v-col>
-      <v-col :cols="4">
-        <div v-if="!viewerActive && activeItem.content_count > 0">
-          <v-row>
-            <h4>
-              Primary Network
-            </h4>
-          </v-row>
-          <v-row>
-            <apexchart
-              :options="{
-                ...contentOptions,
-                xaxis: {
-                  categories: Object.keys(activeItem.content_aggs.network)
-                }
-              }"
-              :series="[
-                { data: Object.values(activeItem.content_aggs.network) }
-              ]"
-            ></apexchart>
-          </v-row>
-        </div>
+      <v-col :cols="4" class="contentCol">
+        <h4>
+          Primary Network
+        </h4>
+        <apexchart
+          :options="{
+            ...contentOptions,
+            xaxis: {
+              categories: Object.keys(activeItem.content_aggs.network)
+            }
+          }"
+          :series="[{ data: Object.values(activeItem.content_aggs.network) }]"
+        ></apexchart>
       </v-col>
     </v-row>
     <hr />
@@ -189,12 +162,14 @@
         <div v-else-if="item.children[0].viewers">
           {{ item.name }} - {{ item.children[0].viewers.length }}
         </div>
-        <div
-          v-else
-        >
-          {{ item.name }} - 
-          <span @mouseenter="handleMouseEnter(item, 'viewer')">viewers: {{ item.viewer_count }}, </span>
-          <span @mouseenter="handleMouseEnter(item, 'content')">content: {{ item.content_count }}</span>
+        <div v-else>
+          {{ item.name }} -
+          <span @mouseenter="handleMouseEnter(item, 'viewer')"
+            >viewers: {{ item.viewer_count }},
+          </span>
+          <span @mouseenter="handleMouseEnter(item, 'content')"
+            >content: {{ item.content_count }}</span
+          >
         </div>
       </template>
     </v-treeview>
@@ -240,8 +215,7 @@ export default {
       },
       contentOptions: {
         chart: {
-          type: "bar",
-          height: 250
+          type: "bar"
         },
         plotOptions: {
           bar: { horizontal: true }
@@ -265,7 +239,7 @@ export default {
     ...mapActions([]),
     handleMouseEnter(item, type) {
       this.activeItem = item;
-      this.viewerActive = type === 'viewer';
+      this.viewerActive = type === "viewer";
     },
     handleMouseLeave() {
       // this.activeItem = {};
@@ -295,5 +269,16 @@ export default {
 <style scoped>
 .v-treeview {
   overflow-y: scroll;
+}
+.contentRow {
+  height: 300px;
+  min-height: 300px;
+  max-height: 300px;
+}
+.contentCol {
+  height: 300px;
+  overflow-y: scroll;
+  padding-left: 30px;
+  padding-right: 10px;
 }
 </style>

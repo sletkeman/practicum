@@ -12,14 +12,13 @@
     </v-navigation-drawer>
     <v-app-bar app dark style="background-color:#b3a369" clipped-right>
       <div class="d-flex align-center">
-        <router-link :to="{ name: 'Home' }">
-          <v-img
-            alt="Georgia Tech Logo"
-            contain
-            :src="require('./assets/gt-logo.svg')"
-            width="150"
-          />
-        </router-link>
+        <v-img
+          alt="Georgia Tech Logo"
+          contain
+          :src="require('./assets/gt-logo.svg')"
+          width="150"
+          @click="togglePage"
+        />
       </div>
       <v-spacer></v-spacer>
       <v-spacer></v-spacer>
@@ -58,8 +57,12 @@ export default {
     }
   },
   methods: {
-    goHome() {
-      this.$router.push("/");
+    togglePage() {
+      if (this.$route.name === "Home") {
+        this.$router.push("/graph");
+      } else {
+        this.$router.push("/");
+      }
     }
   },
   computed: {

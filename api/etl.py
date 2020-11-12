@@ -6,15 +6,18 @@ from mysql.connector.constants import ClientFlag
 
 load_dotenv(dotenv_path="../.env")
 
+ondemand = '_ondemand'
+# ondemand = ''
+
 tables = [
-    # 'content',
+    #'content',
     'viewers',
-    # 'engagement'
+    #'engagement'
 ]
 column_names = [
-    # '(@dummy, CONTENTSK, PROGRAMCATEGORY, PROGRAMNAME, PROGRAMTYPESUMMARY, NHIPROGRAMTYPE, EPISODES, DURATION, PIDS, PRIMARYNETWORK)',
-    '(@dummy, PERSONKEY, FIRST_RESPONDENTWEIGHTREPORTDATE, LAST_RESPONDENTWEIGHTREPORTDATE, INTABWEIGHT, AGE, GENDER, RACE, PERSON_EDUCATION, PERSON_EDUCATION_LEVEL, COUNTYSIZE, COUNTY_SIZE_LEVEL, HOUSEHOLDINCOME, LANGUAGEOFHOUSEHOLD, HEADOFHOUSHOLD_EDUCATION_LEVEL, HOUSEHOLDSIZE, NUMBEROFCHILDREN, NUMBEROFADULTS, NUMBEROFINCOMES, @HASCAT, @HASDOG, @HASSVODSUBSCRIPTION, @HASNETFLIXSUBSCRIPTION, @HASHULUSUBSCRIPTION, @HASAMAZONPRIMESUBSCRIPTION, @WEEKLY_VIEWING_MINUTES)',
-    # '(@dummy, CONTENTSK, PERSONKEY, ENGAGEMENT)'
+    #'(@dummy, CONTENTSK, PROGRAMCATEGORY, PROGRAMNAME, PROGRAMTYPESUMMARY, NHIPROGRAMTYPE, EPISODES, DURATION, PIDS, PRIMARYNETWORK)',
+    '(@dummy, PERSONKEY,FIRST_RESPONDENTWEIGHTREPORTDATE,LAST_RESPONDENTWEIGHTREPORTDATE,INTABWEIGHT,AGE,GENDER,RACE,PERSON_EDUCATION,PERSON_EDUCATION_LEVEL,COUNTYSIZE,COUNTY_SIZE_LEVEL,HOUSEHOLDINCOME,LANGUAGEOFHOUSEHOLD,HEADOFHOUSHOLD_EDUCATION_LEVEL,HOUSEHOLDSIZE,NUMBEROFCHILDREN,NUMBEROFADULTS,NUMBEROFINCOMES,HASCAT,HASDOG,HASSVODSUBSCRIPTION,HASNETFLIXSUBSCRIPTION,HASHULUSUBSCRIPTION,HASAMAZONPRIMESUBSCRIPTION,ISNEWCARPROSPECTLAST3YEARS,ISNEWTRUCKPROSPECTLAST3YEARS,HASMAC,HASPC,WEEKLY_VIEWING_MINUTES)',
+    #'(@dummy, CONTENTSK,PERSONKEY,ENGAGEMENT)'
 ]
 
 user = environ['SNOWFLAKE_USER']
@@ -22,7 +25,7 @@ password = environ['SNOWFLAKE_PASS']
 account = environ['SNOWFLAKE_ACCT']
 warehouse='ADDS_DW'
 database='CONTENT_ENGAGEMENT'
-schema='ENGAGEMENT'
+schema='ENGAGEMENT_ONDEMAND'
 
 mySql = {
   'user': 'python',
@@ -39,16 +42,16 @@ def extract(table_name):
     conn.cursor().execute(f"USE {database}")
     conn.cursor().execute(f"USE SCHEMA {schema}")
     query_output = conn.cursor().execute(f"""
-        select * from engagement.{table_name};
+        select * from {table_name};
     """)
-    query_output.fetch_pandas_all().to_csv(f"{table_name}.csv")
+    query_output.fetch_pandas_all().to_csv(f"{table_name}{ondemand}.csv")
     conn.close()
 
 def load(table_name, columns):
     cnx = mysql.connector.connect(**mySql)
     cursor = cnx.cursor()
     query = (f"""
-        LOAD DATA INFILE '/Users/sletkeman/practicum/{table_name}.csv' INTO TABLE {table_name}
+        LOAD DATA INFILE '/Users/sletkeman/practicum/{table_name}{ondemand}.csv' INTO TABLE {table_name}{ondemand}
         FIELDS TERMINATED BY ','
         ENCLOSED BY '"'
         IGNORE 1 LINES
@@ -59,6 +62,10 @@ def load(table_name, columns):
             HASNETFLIXSUBSCRIPTION = (@HASNETFLIXSUBSCRIPTION = 'True'),
             HASHULUSUBSCRIPTION = (@HASHULUSUBSCRIPTION = 'True'), 
             HASAMAZONPRIMESUBSCRIPTION = (@HASAMAZONPRIMESUBSCRIPTION = 'True'),
+            ISNEWCARPROSPECTLAST3YEARS = (@ISNEWCARPROSPECTLAST3YEARS = 'True'),
+	        ISNEWTRUCKPROSPECTLAST3YEARS = (@ISNEWTRUCKPROSPECTLAST3YEARS = 'True'),
+	        HASMAC = (@HASMAC = 'True'),
+	        HASPC = (@HASPC = 'True'),
             WEEKLY_VIEWING_MINUTES = IF(@WEEKLY_VIEWING_MINUTES = '', 0.0, @WEEKLY_VIEWING_MINUTES)
     """)
     cursor.execute(query)
