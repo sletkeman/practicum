@@ -1,5 +1,14 @@
 from util.mysql import MySqlDatabase
 
+def recordData(viewer_condition, content_condition, size, folder, ondemand):
+    with MySqlDatabase() as mysql:
+        command = f"""
+            INSERT INTO content_engagement.RESULTS (folder, viewer_condition, content_condition, size, ondemand)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        mysql.execute(command, (folder, viewer_condition, content_condition, size, ondemand))
+
+
 def get_viewers(sample_size, viewer_condition, content_condition):
     with MySqlDatabase() as mysql:
         query = f"""

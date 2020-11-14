@@ -2,10 +2,15 @@ import graph_tool.all as gt
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from os import mkdir, path
+from datetime import datetime
 
-# from services.mysql import (
-#     get_viewers, get_content, get_engagement
-# )
+from services.mysql import (
+    # get_viewers,
+    # get_content,
+    # get_engagement,
+    recordData
+)
 
 from services.snowflake import (
     get_viewers, get_content, get_engagement
@@ -28,7 +33,29 @@ v_program_summary = None
 v_network = None
 e_engagement = None
 
-def build_tree(viewer_condition, content_condition, size):
+def save_results(size, viewer_condition, content_condition, viewers, engagement, content, useOnDemand):
+    now = datetime.now()
+    nowStr = now.strftime("%b-%d_%H:%M:%S")
+    mkdir(path.join('data', nowStr))
+    recordData(viewer_condition, content_condition, size, nowStr, useOnDemand)
+
+    fileName = path.join('data', nowStr, 'info.txt')
+    with open(fileName, 'a') as file1:
+        file1.write(f'useOnDemand: {useOnDemand}\n')
+        file1.write(f'size: {size}\n')
+        file1.write(f'viewer condition: {viewer_condition}\n')
+        file1.write(f'content condition: {content_condition}\n')
+        file1.close() 
+
+    engagement_df = pd.DataFrame(engagement)
+    engagement_df.to_csv(path.join('data', nowStr, 'engagement.csv'))
+    viewers_df = pd.DataFrame(viewers)
+    viewers_df.to_csv(path.join('data', nowStr, 'viewers.csv'))
+    content_df = pd.DataFrame(content)
+    content_df.to_csv(path.join('data', nowStr, 'content.csv'))
+
+
+def build_tree(useOnDemand, viewer_condition, content_condition, size):
     global v_is_content
     global v_person_key
     global v_content_sk
@@ -43,18 +70,19 @@ def build_tree(viewer_condition, content_condition, size):
     global v_age
     global v_network
 
-    viewers = get_viewers(size, viewer_condition)
+    viewers = get_viewers(size, viewer_condition, useOnDemand)
     print(f"Viewers: {len(viewers)}")
     if (len(viewers) < int(size)):
         raise Exception("Too few viewers were found using the given condtions")
-    engagement = get_engagement(viewers, content_condition)
+    engagement = get_engagement(viewers, content_condition, useOnDemand)
     engagement_df = pd.DataFrame(engagement)
     engagement_df.loc[engagement_df['ENGAGEMENT'] > 100, ['ENGAGEMENT']] = 100
     engagement_df['SCALED_ENGAGEMENT'] = preprocessing.scale(engagement_df['ENGAGEMENT'])
     # engagement_df.to_csv('engagement.csv')
     print(f"Engagement: {len(engagement)}")
-    content = get_content(viewers, content_condition)
+    content = get_content(viewers, content_condition, useOnDemand)
     print(f"Content: {len(content)}")
+    save_results(size, viewer_condition, content_condition, viewers, engagement, content, useOnDemand)
     viewers_map = {}
     content_map = {}
     g = gt.Graph()
@@ -165,8 +193,8 @@ def aggregate_viewers(viewers, aggs):
     aggs['age'] += int(viewers.get("age"))
     aggs['income'] += int(viewers.get("income"))
 
-def build_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g, engagement_df = build_tree(viewer_condition, content_condition, size)
+def build_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
+    g, engagement_df = build_tree(useOnDemand, viewer_condition, content_condition, size)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_blockmodel_dl(g
         , state_args=state_args
@@ -293,8 +321,8 @@ def recurseUp(max_level, blocks, level, i, item, results, counter, vertex):
         b = blocks[level]
         recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter, vertex)
 
-def build_nest_block_model(viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g, engagement_df = build_tree(viewer_condition, content_condition, size)
+def build_nest_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
+    g, engagement_df = build_tree(useOnDemand, viewer_condition, content_condition, size)
     print("building model")
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-normal"]) if use_edge_weights else dict()
     state = gt.minimize_nested_blockmodel_dl(g

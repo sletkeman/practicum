@@ -3,11 +3,9 @@
 
 from util.snowflake import SnowflakeDatabase
 
-# schema = "engagement_ondemand"
-schema = "engagement"
-
-def get_viewers(sample_size, viewer_condition):
+def get_viewers(sample_size, viewer_condition, onDemand):
     with SnowflakeDatabase() as sno:
+        schema = f"engagement{'_ondemand' if onDemand else ''}"
         query = f"""
             SELECT personkey, age, gender, person_education, countysize, householdincome
             FROM {schema}.viewers v SAMPLE({sample_size} rows)
@@ -15,8 +13,9 @@ def get_viewers(sample_size, viewer_condition):
         """
         return sno.query(query)
 
-def get_content(viewers, content_condition):
+def get_content(viewers, content_condition, onDemand):
     with SnowflakeDatabase() as sno:
+        schema = f"engagement{'_ondemand' if onDemand else ''}"
         query = f"""
             select distinct c.contentsk, c.programname, c.nhiprogramtype, c.programtypesummary, c.primarynetwork
             from {schema}.engagement e
@@ -25,8 +24,9 @@ def get_content(viewers, content_condition):
         """
         return sno.query(query)
 
-def get_engagement(viewers, content_condition):
+def get_engagement(viewers, content_condition, onDemand):
     with SnowflakeDatabase() as sno:
+        schema = f"engagement{'_ondemand' if onDemand else ''}"
         query = f"""
             select e.personkey, e.engagement, e.contentsk
             from {schema}.engagement e

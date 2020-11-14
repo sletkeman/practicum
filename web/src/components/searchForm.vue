@@ -12,6 +12,12 @@
             </v-list-item-content>
           </template>
           <v-switch
+            label="Use On Demand"
+            v-model="form.useOnDemand"
+            class="mx-4"
+            dense
+          ></v-switch>
+          <v-switch
             label="Use Nested Model"
             v-model="form.useNestedModel"
             class="mx-4"
@@ -271,6 +277,7 @@ export default {
         viewers: true
       },
       form: {
+        useOnDemand: false,
         useNestedModel: true,
         useDegreeCorrection: true,
         useEdgeWeights: false,

@@ -32,3 +32,7 @@ class MySqlDatabase(object):
     def query(self, query):
         self.cursor.execute(query)
         return self.cursor.fetchall()
+
+    def execute(self, command, params):
+        self.cursor.execute(command, params)
+        self.connection.commit()

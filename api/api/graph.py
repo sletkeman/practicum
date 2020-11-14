@@ -70,16 +70,16 @@ def get_condition(body):
 
 def get_data(body):
     try:
-        # if True:
-        if False:
-            useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
-              itemgetter('useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
+        if True:
+        # if False:
+            useOnDemand, useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
+              itemgetter('useOnDemand', 'useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
             viewer_condition, content_condition = get_condition(body)
             result = {}
             if useNestedModel:
-                result = build_nest_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+                result = build_nest_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
             else:
-                result = build_block_model(viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+                result = build_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
             with open('result.json', 'w') as fp:
                 dump(result, fp)
             return result, 200
