@@ -35,7 +35,7 @@ e_engagement = None
 
 def save_results(size, viewer_condition, content_condition, viewers, engagement, content, useOnDemand):
     now = datetime.now()
-    nowStr = now.strftime("%b-%d_%H:%M:%S")
+    nowStr = now.strftime("%b-%d_%H:%M")
     mkdir(path.join('data', nowStr))
     recordData(viewer_condition, content_condition, size, nowStr, useOnDemand)
 
@@ -47,15 +47,12 @@ def save_results(size, viewer_condition, content_condition, viewers, engagement,
         file1.write(f'content condition: {content_condition}\n')
         file1.close() 
 
-    engagement_df = pd.DataFrame(engagement)
-    engagement_df.to_csv(path.join('data', nowStr, 'engagement.csv'))
-    viewers_df = pd.DataFrame(viewers)
-    viewers_df.to_csv(path.join('data', nowStr, 'viewers.csv'))
-    content_df = pd.DataFrame(content)
-    content_df.to_csv(path.join('data', nowStr, 'content.csv'))
+    engagement.to_csv(path.join('data', nowStr, 'engagement.csv'))
+    viewers.to_csv(path.join('data', nowStr, 'viewers.csv'))
+    content.to_csv(path.join('data', nowStr, 'content.csv'))
 
 
-def build_tree(useOnDemand, viewer_condition, content_condition, size):
+def build_tree(useOnDemand, viewer_condition, content_condition, size, savedDir):
     global v_is_content
     global v_person_key
     global v_content_sk
@@ -70,19 +67,34 @@ def build_tree(useOnDemand, viewer_condition, content_condition, size):
     global v_age
     global v_network
 
-    viewers = get_viewers(size, viewer_condition, useOnDemand)
-    print(f"Viewers: {len(viewers)}")
-    if (len(viewers) < int(size)):
-        raise Exception("Too few viewers were found using the given condtions")
-    engagement = get_engagement(viewers, content_condition, useOnDemand)
-    engagement_df = pd.DataFrame(engagement)
-    engagement_df.loc[engagement_df['ENGAGEMENT'] > 100, ['ENGAGEMENT']] = 100
-    engagement_df['SCALED_ENGAGEMENT'] = preprocessing.scale(engagement_df['ENGAGEMENT'])
-    # engagement_df.to_csv('engagement.csv')
-    print(f"Engagement: {len(engagement)}")
-    content = get_content(viewers, content_condition, useOnDemand)
-    print(f"Content: {len(content)}")
-    save_results(size, viewer_condition, content_condition, viewers, engagement, content, useOnDemand)
+    viewers_df = None
+    content_df = None
+    engagement_df = None
+    if savedDir:
+        viewers_df = pd.read_csv(path.join('data', savedDir, 'viewers.csv'))
+        content_df = pd.read_csv(path.join('data', savedDir, 'content.csv'))
+        engagement_df = pd.read_csv(path.join('data', savedDir, 'engagement.csv'))
+        # print(viewers_df.head())
+        # print(content_df.head())
+        # print(engagement_df.head())
+    else:
+        viewers = get_viewers(size, viewer_condition, content_condition, useOnDemand)
+        if (len(viewers) < int(size)):
+            raise Exception("Too few viewers were found using the given condtions")
+        viewers_df = pd.DataFrame(viewers)
+        print(f"Viewers: {len(viewers)}")
+
+        engagement = get_engagement(viewers, content_condition, useOnDemand)
+        engagement_df = pd.DataFrame(engagement)
+        engagement_df.loc[engagement_df['ENGAGEMENT'] > 100, ['ENGAGEMENT']] = 100
+        engagement_df['SCALED_ENGAGEMENT'] = preprocessing.scale(engagement_df['ENGAGEMENT'])
+        print(f"Engagement: {len(engagement)}")
+    
+        content = get_content(viewers, content_condition, useOnDemand)
+        content_df = pd.DataFrame(content)
+        print(f"Content: {len(content)}")
+
+        save_results(size, viewer_condition, content_condition, viewers_df, engagement_df, content_df, useOnDemand)
     viewers_map = {}
     content_map = {}
     g = gt.Graph()
@@ -112,7 +124,7 @@ def build_tree(useOnDemand, viewer_condition, content_condition, size):
     g.vertex_properties['program_summary'] = v_program_summary
     g.vertex_properties['network'] = v_network
     g.edge_properties['engagement'] = e_engagement
-    for v in viewers:
+    for key, v in viewers_df.iterrows():
         vertex = g.add_vertex()
         v_is_content[vertex] = False
         v_person_key[vertex] = v.get(case('personkey'))
@@ -122,7 +134,7 @@ def build_tree(useOnDemand, viewer_condition, content_condition, size):
         v_income[vertex] = v.get(case('householdincome'))
         v_county_size[vertex] = v.get(case('countysize'))
         viewers_map[v.get(case('personkey'))] = vertex
-    for c in content:
+    for key, c in content_df.iterrows():
         vertex = g.add_vertex()
         v_is_content[vertex] = True
         v_content_sk[vertex] = c.get(case('contentsk'))
@@ -135,9 +147,8 @@ def build_tree(useOnDemand, viewer_condition, content_condition, size):
         v = viewers_map[e.get(case('personkey'))]
         c = content_map[e.get(case('contentsk'))]
         edge = g.add_edge(v, c)
-        eng = e.get('SCALED_ENGAGEMENT')
-        e_engagement[edge] = eng
-    return g, engagement_df
+        e_engagement[edge] = e.get('SCALED_ENGAGEMENT')
+    return g, engagement_df, len(viewers_df.index), len(content_df.index)
 
 def get_result_item(v):
     if v_is_content[v]:
@@ -193,8 +204,8 @@ def aggregate_viewers(viewers, aggs):
     aggs['age'] += int(viewers.get("age"))
     aggs['income'] += int(viewers.get("income"))
 
-def build_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g, engagement_df = build_tree(useOnDemand, viewer_condition, content_condition, size)
+def build_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights, savedDir):
+    g, engagement_df, viewers, content = build_tree(useOnDemand, viewer_condition, content_condition, size, savedDir)
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-exponential"]) if use_edge_weights else dict()
     state = gt.minimize_blockmodel_dl(g
         , state_args=state_args
@@ -205,7 +216,9 @@ def build_block_model(useOnDemand, viewer_condition, content_condition, size, us
     results = {
         "entropy": state.entropy(),
         "results": [],
-        "edges": engagement_df.to_dict('records')
+        "edges": engagement_df.to_dict('records'),
+        "viewers": viewers,
+        "content": content
     }
     counter = { "count": 0 }
     for i, v in enumerate(verticies):
@@ -321,8 +334,8 @@ def recurseUp(max_level, blocks, level, i, item, results, counter, vertex):
         b = blocks[level]
         recurseUp(max_level, blocks, level + 1, b[i], (b[i], item), results, counter, vertex)
 
-def build_nest_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights):
-    g, engagement_df = build_tree(useOnDemand, viewer_condition, content_condition, size)
+def build_nest_block_model(useOnDemand, viewer_condition, content_condition, size, use_deg_corr, use_edge_weights, savedDir):
+    g, engagement_df, viewers, content = build_tree(useOnDemand, viewer_condition, content_condition, size, savedDir)
     print("building model")
     state_args = dict(recs=[g.ep.engagement],rec_types=["real-normal"]) if use_edge_weights else dict()
     state = gt.minimize_nested_blockmodel_dl(g
@@ -347,7 +360,9 @@ def build_nest_block_model(useOnDemand, viewer_condition, content_condition, siz
     results = {
         "entropy": state.entropy(),
         "results": [],
-        "edges": engagement_df.to_dict('records')
+        "edges": engagement_df.to_dict('records'),
+        "viewers": viewers,
+        "content": content
     }
     counter = { "count": 0 }
     for i, v in enumerate(verticies):

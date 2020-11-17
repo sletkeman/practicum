@@ -1,18 +1,10 @@
 <template>
   <div style="height:100%">
     <v-row
-      style="height: 300px"
+      class="contentRow"
       v-if="viewerActive && activeItem.viewer_count > 0"
     >
-      <!-- <v-col :cols="3">
-          <v-card-title>
-            Entropy
-          </v-card-title>
-          <v-card-text>
-            {{ entropy | round }}
-          </v-card-text>
-        </v-col> -->
-      <v-col :cols="3">
+      <v-col :cols="3" class="contentCol">
         <div>
           <v-row>
             <v-col>
@@ -32,15 +24,15 @@
           <v-row>
             <v-col>
               Average Income:
-              {{
+              ${{
                 (activeItem.viewer_aggs.income / activeItem.viewer_count)
                   | round
-              }}
+              }},000
             </v-col>
           </v-row>
         </div>
       </v-col>
-      <v-col :cols="3">
+      <v-col :cols="3" class="contentCol">
         <h4>Gender</h4>
         <apexchart
           :options="{
@@ -52,7 +44,7 @@
           :series="[{ data: Object.values(activeItem.viewer_aggs.gender) }]"
         ></apexchart>
       </v-col>
-      <v-col :cols="3">
+      <v-col :cols="3" class="contentCol">
         <h4>
           Education
         </h4>
@@ -66,7 +58,7 @@
           :series="[{ data: Object.values(activeItem.viewer_aggs.education) }]"
         ></apexchart>
       </v-col>
-      <v-col :cols="3">
+      <v-col :cols="3" class="contentCol">
         <h4>
           County Size
         </h4>
@@ -85,7 +77,7 @@
     </v-row>
     <v-row
       class="contentRow"
-      v-if="!viewerActive && activeItem.content_count > 0"
+      v-else-if="!viewerActive && activeItem.content_count > 0"
     >
       <v-col :cols="4" class="contentCol">
         <h4>Program Summary</h4>
@@ -132,11 +124,14 @@
         ></apexchart>
       </v-col>
     </v-row>
+    <v-row v-else class="contentRow"></v-row>
     <hr />
     <div v-if="loading" style="width:100%;text-align:center;padding-top:100px">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
-    <v-treeview :items="data" dense :style="`height:${tableHeight}px`" v-else>
+    <div v-else>
+    Entropy: {{ entropy | round }}
+    <v-treeview :items="data" dense :style="`height:${tableHeight}px`" >
       <template v-slot:label="{ item }">
         <div v-if="Object.keys(item).includes('content')">
           <v-data-table
@@ -173,6 +168,7 @@
         </div>
       </template>
     </v-treeview>
+    </div>
   </div>
 </template>
 
@@ -274,6 +270,7 @@ export default {
   height: 300px;
   min-height: 300px;
   max-height: 300px;
+  padding-right: 10px;
 }
 .contentCol {
   height: 300px;

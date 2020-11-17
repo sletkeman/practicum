@@ -7,17 +7,19 @@ const state = {
   data: [],
   entropy: 0,
   loading: false,
-  edges: []
+  edges: [],
+  viewers: 0,
+  content: 0
 };
 
 const actions = {
   async [GET_DATA]({ commit }, [formData]) {
     try {
-      commit(SET_LOADING);
+      commit(SET_LOADING, true);
       const { data } = await getResults(formData);
-      const { entropy, results, edges } = data;
-      commit(SET_DATA, [results, entropy, edges]);
-      commit(SET_LOADING);
+      const { entropy, results, edges, viewers, content } = data;
+      commit(SET_DATA, [results, entropy, edges, viewers, content]);
+      commit(SET_LOADING, false);
     } catch (error) {
       commit(SET_ERROR, error);
     }
@@ -25,13 +27,15 @@ const actions = {
 };
 
 const mutations = {
-  [SET_DATA](state, [data, entropy, edges]) {
+  [SET_DATA](state, [data, entropy, edges, viewers, content]) {
     state.data = data;
     state.entropy = entropy;
     state.edges = edges;
+    state.viewers = viewers;
+    state.content = content;
   },
-  [SET_LOADING](state) {
-    state.loading = !state.loading;
+  [SET_LOADING](state, value) {
+    state.loading = value;
   }
 };
 

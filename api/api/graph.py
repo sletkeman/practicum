@@ -24,8 +24,7 @@ def get_condition(body):
 
     # content
     if programName:
-        joined = "','".join(programName)
-        content_condition = f"{content_condition} AND programname in ('{joined}')"
+        content_condition = f"{content_condition} AND programname = '{programName}'"
     if programCategory:
         content_condition = f"{content_condition} AND programcategory = '{programCategory}'"
     if programTypeSummary:
@@ -44,7 +43,7 @@ def get_condition(body):
     if useAge:
         viewer_condition = f"{viewer_condition} AND v.age >= {age[0]} AND v.age <= {age[1]}"
     if useIncome:
-        viewer_condition = f"{viewer_condition} AND v.income >= {income[0]} AND v.income <= {income[1]}"
+        viewer_condition = f"{viewer_condition} AND v.householdincome >= {income[0]} AND v.householdincome <= {income[1]}"
     if useChildren:
         viewer_condition = f"{viewer_condition} AND v.numberofchildren >= {children[0]} AND v.numberofchildren <= {children[1]}"
     if useAdults:
@@ -70,16 +69,18 @@ def get_condition(body):
 
 def get_data(body):
     try:
-        if True:
-        # if False:
+        # savedDir = 'Nov-15_22:20'
+        savedDir = False
+        # if True:
+        if False:
             useOnDemand, useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
               itemgetter('useOnDemand', 'useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
             viewer_condition, content_condition = get_condition(body)
             result = {}
             if useNestedModel:
-                result = build_nest_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+                result = build_nest_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights, savedDir)
             else:
-                result = build_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights)
+                result = build_block_model(useOnDemand, viewer_condition, content_condition, sampleSize, useDegreeCorrection, useEdgeWeights, savedDir)
             with open('result.json', 'w') as fp:
                 dump(result, fp)
             return result, 200

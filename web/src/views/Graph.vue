@@ -27,33 +27,8 @@ export default {
   data() {
     return {
       recipeId: this.$route.params.id,
-      colors: [
-        "maroon",
-        "red",
-        "purple",
-        "fuchsia",
-        "green",
-        "lime",
-        "olive",
-        "yellow",
-        "navy",
-        "blue",
-        "teal",
-        "aqua",
-        "orange",
-        "blueviolet",
-        "brown",
-        "burlywood",
-        "cadetblue",
-        "chartreuse",
-        "chocolate",
-        "coral",
-        "cornflowerblue",
-        "cornsilk",
-        "crimson",
-        "darkblue",
-        "darkcyan"
-      ],
+      maxNodes: 750,
+      colors: ["#1b70fc", "#faff16", "#d50527", "#158940", "#f898fd", "#24c9d7", "#cb9b64", "#866888", "#22e67a", "#e509ae", "#9dabfa", "#437e8a", "#b21bff", "#ff7b91", "#94aa05", "#ac5906", "#82a68d", "#fe6616", "#7a7352", "#f9bc0f", "#b65d66", "#07a2e6", "#c091ae", "#8a91a7", "#88fc07", "#ea42fe", "#9e8010", "#10b437", "#c281fe", "#f92b75", "#07c99d", "#a946aa", "#bfd544", "#16977e", "#ff6ac8", "#a88178", "#5776a9", "#678007", "#fa9316", "#85c070", "#6aa2a9", "#989e5d", "#fe9169", "#cd714a", "#6ed014", "#c5639c", "#c23271", "#698ffc", "#678275", "#c5a121", "#a978ba", "#ee534e", "#d24506", "#59c3fa", "#ca7b0a", "#6f7385", "#9a634a", "#48aa6f", "#ad9ad0", "#d7908c", "#6a8a53", "#8c46fc", "#8f5ab8", "#fd1105", "#7ea7cf", "#d77cd1", "#a9804b", "#0688b4", "#6a9f3e", "#ee8fba", "#a67389", "#9e8cfe", "#bd443c", "#6d63ff", "#d110d5", "#798cc3", "#df5f83", "#b1b853", "#bb59d8", "#1d960c", "#867ba8", "#18acc9", "#25b3a7", "#f3db1d", "#938c6d", "#936a24", "#a964fb", "#92e460", "#a05787", "#9c87a0", "#20c773", "#8b696d", "#78762d", "#e154c6", "#40835f", "#d73656", "#1afd5c", "#c4f546", "#3d88d8", "#bd3896", "#1397a3", "#f940a5", "#66aeff", "#d097e7", "#fe6ef9", "#d86507", "#8b900a", "#d47270", "#e8ac48", "#cf7c97", "#cebb11", "#718a90", "#e78139", "#ff7463", "#bea1fd"],
       links: [],
       nodes: {},
       height: 1500,
@@ -67,29 +42,29 @@ export default {
       tip: d3Tip()
         .attr("class", "d3-tip")
         .html(d => {
-          if (d.type === 'viewer') {
-            return `gender: ${d.gender || 'N/A'}`;
+          if (d.type === "viewer") {
+            return `gender: ${d.gender || "N/A"}`;
           } else {
             return d.program_name;
           }
         })
-        // .html(function(d) {
-        //   if (d.type === "viewer") {
-        //     return `personKey: ${d.person_key}<br>`;
-        //     // age: ${v.age}<br>
-        //     // income: ${v.income}<br>
-        //     // gender: ${v.gender}<br>
-        //     // education: ${v.education}<br>
-        //     // county size: ${v.county_size}`;
-        //   } else {
-        //     return `contentKey: ${d.content_key}<br>`;
-        //     //     network": ${c.network}<br>
-        //     //     program name: ${c.program_name}<br>
-        //     //     program summary: ${c.program_summary}<br>
-        //     //     program type: ${c.program_type}<br>
-        //     // `;
-        //   }
-        // })
+      // .html(function(d) {
+      //   if (d.type === "viewer") {
+      //     return `personKey: ${d.person_key}<br>`;
+      //     // age: ${v.age}<br>
+      //     // income: ${v.income}<br>
+      //     // gender: ${v.gender}<br>
+      //     // education: ${v.education}<br>
+      //     // county size: ${v.county_size}`;
+      //   } else {
+      //     return `contentKey: ${d.content_key}<br>`;
+      //     //     network": ${c.network}<br>
+      //     //     program name: ${c.program_name}<br>
+      //     //     program summary: ${c.program_summary}<br>
+      //     //     program type: ${c.program_type}<br>
+      //     // `;
+      //   }
+      // })
     };
   },
   watch: {
@@ -102,25 +77,32 @@ export default {
   },
   methods: {
     processData() {
-      //   let viewerCount = 0;
+      let nodeCount = 0;
+      const skipInterval = Math.round(
+        (this.content + this.viewers) / this.maxNodes
+      );
       this.data.forEach(row => {
         row.children.forEach(child => {
           if (child.name === "Viewers") {
             child.children[0].viewers.forEach(viewer => {
-              //   if (viewerCount % 2 === 0) {
-              viewer.community = row.name;
-              this.nodes[viewer.person_key] = viewer;
-              //   }
-              //   viewerCount += 1;
+              if (nodeCount % skipInterval === 0) {
+                viewer.community = row.name;
+                this.nodes[viewer.person_key] = viewer;
+              }
+              nodeCount += 1;
             });
           } else if (child.name === "Content") {
             child.children[0].content.forEach(item => {
-              item.community = row.name;
-              this.nodes[`${item.content_key}`] = item;
+              if (nodeCount % skipInterval === 0) {
+                item.community = row.name;
+                this.nodes[`${item.content_key}`] = item;
+              }
+              nodeCount += 1;
             });
           }
         });
       });
+      console.log(Object.keys(this.nodes).length)
       this.edges.forEach(e => {
         if (this.nodes[e.PERSONKEY] && this.nodes[`${e.CONTENTSK}`]) {
           this.links.push({
@@ -145,11 +127,11 @@ export default {
       this.simulation = d3
         .forceSimulation()
         .nodes(d3.values(this.nodes))
-        .force("link", d3.forceLink(this.links).distance(5))
+        .force("link", d3.forceLink(this.links).distance(50))
         .force("center", d3.forceCenter(this.width / 2, this.height / 2))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
-        .force("charge", d3.forceManyBody().strength(-50))
+        .force("charge", d3.forceManyBody().strength(-150))
         .alphaTarget(1)
         .on("tick", this.tick);
 
@@ -179,124 +161,98 @@ export default {
             .on("end", this.dragended)
         );
 
-      // add the nodes
-      //   let maxWeight = 0;
+      const myColor = d3.scaleOrdinal().domain([0, this.data.length])
+        .range(this.colors);
+
       this.node
         .filter(n => n.type === "viewer")
         .append("circle")
-        .attr("r", 3)
-        .style("fill", d => this.colors[d.community]);
-      // .attr("r", d => {
-      //   d.weight = this.links.filter(
-      //     l => l.source.index == d.index || l.target.index == d.index
-      //   ).length;
-      //   if (d.weight > maxWeight) {
-      //     maxWeight = d.weight;
-      //   }
-      //   return 10;
-      // });
+        .attr("r", 5)
+        .style("fill", d => myColor(d.community));
 
-      // make recipe nodes a Wye symbol
       this.node
         .filter(n => n.type === "content")
         .append("rect")
-        .attr("width", 6)
-        .attr("height", 6)
-        .style("fill", d => this.colors[d.community]);
-      // .append("path")
-      // .attr("d", d =>
-      //   d3
-      //     .symbol()
-      //     .type(d3.symbolWye)
-      //     .size(1000 * d.score)()
-      // );
-
-      // set up the yellow-green color gradient for the ingredients
-      //   const gradient = d3
-      //     .scaleLinear()
-      //     .domain([1, maxWeight])
-      //     .range(["yellow", "darkgreen"]);
-
-      // add the recipe and ingredient names
-      //   this.node
-      //     .append("text")
-      //     .text(d => d.name)
-      //     .attr("transform", "translate(0,10)")
-      //     .style("font-weight", "bold")
-
-      // add color to the nodes
-      //   this.node.style("fill", d =>
-      //     d.type === "ingredient" ? gradient(d.weight) : "mediumorchid"
-      //   );
+        .attr("width", 10)
+        .attr("height", 10)
+        .style("fill", d => myColor(d.community));
 
       //   // add a group for the legend
-      //   const legend = this.svg.append("g").attr("id", "legend");
-      //   // outline it with a semi-transparent rectangle
-      //   legend
-      //     .append("rect")
-      //     .attr("fill", "white")
-      //     .attr("stroke", "lightgray")
-      //     .attr("fill-opacity", "0.8")
-      //     .attr("rx", "5px")
-      //     .attr("width", "90px")
-      //     .attr("height", "205px")
-      //     .attr("x", this.width - 180)
-      //     .attr("y", 10);
+        const legend = this.svg.append("g").attr("id", "legend");
+        // outline it with a semi-transparent rectangle
+        legend
+          .append("rect")
+          .attr("fill", "white")
+          .attr("stroke", "lightgray")
+          .attr("fill-opacity", "0.8")
+          .attr("rx", "5px")
+          .attr("width", "160px")
+          .attr("height", `${this.data.length * 17}px`)
+          .attr("x", this.width - 180)
+          .attr("y", 10);
 
-      //   // add the labels
-      //   legend
-      //     .append("text")
-      //     .attr("x", this.width - 155)
-      //     .attr("y", 30)
-      //     .text("Recipes")
-      //     .attr("text-anchor", "left")
-      //     .style("alignment-baseline", "middle");
-      //   legend
-      //     .append("path")
-      //     .style("fill", "mediumorchid")
-      //     .attr("transform", `translate(${this.width - 135}, ${60})`)
-      //     .attr(
-      //       "d",
-      //       d3
-      //         .symbol()
-      //         .type(d3.symbolWye)
-      //         .size(500)()
-      //     );
-      //   legend
-      //     .append("text")
-      //     .attr("x", this.width - 160)
-      //     .attr("y", 100)
-      //     .text("Ingredients")
-      //     .attr("text-anchor", "left")
-      //     .style("alignment-baseline", "middle");
-      //   legend
-      //     .append("text")
-      //     .attr("x", this.width - 160)
-      //     .attr("y", 115)
-      //     .text("in-degree")
-      //     .attr("text-anchor", "left")
-      //     .style("alignment-baseline", "middle");
+        // add the labels
+        legend
+          .append("text")
+          .attr("x", this.width - 85)
+          .attr("y", 60)
+          .text("Viewer")
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle");
+        legend
+          .append("circle")
+          .style("fill", "black")
+          .attr("cx", this.width - 70)
+          .attr("cy", 75)
+          .attr("r", 5)
+        legend
+          .append("text")
+          .attr("x", this.width - 85)
+          .attr("y", 30)
+          .text("Content")
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle");
+        legend
+          .append("rect")
+          .attr("x", this.width - 75)
+          .attr("y", 40)
+          .style("fill", "black")
+          .attr("width", 10)
+          .attr("height", 10)
+        legend
+          .append("text")
+          .attr("x", this.width - 160)
+          .attr("y", 30)
+          .text("Community")
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle");
+        // legend
+        //   .append("text")
+        //   .attr("x", this.width - 160)
+        //   .attr("y", 115)
+        //   .text("in-degree")
+        //   .attr("text-anchor", "left")
+        //   .style("alignment-baseline", "middle");
 
-      //   // prepare to demonstrate the gradient
-      //   const vals = [1, Math.round(maxWeight / 2), maxWeight];
-      //   const labels = legend.selectAll(".labels").data(vals);
-      //   labels
-      //     .enter()
-      //     .append("text")
-      //     .attr("x", this.width - 130)
-      //     .attr("y", (d, i) => 140 + i * 30)
-      //     .text(d => d)
-      //     .attr("text-anchor", "left")
-      //     .style("alignment-baseline", "middle");
-      //   // add the color swatches
-      //   const swatches = legend.selectAll(".swatches").data(vals);
-      //   swatches
-      //     .enter()
-      //     .append("circle")
-      //     .attr("cx", this.width - 150)
-      //     .attr("cy", (d, i) => 138 + i * 30)
-      //     .attr("r", 10)
-      //     .style("fill", d => gradient(d));
+        // prepare to demonstrate the gradient
+        const labels = legend.selectAll(".labels").data(this.data);
+        labels
+          .enter()
+          .append("text")
+          .attr("x", this.width - 150)
+          .attr("y", (d, i) => 45 + i * 15)
+          .text(d => d.name)
+          .attr("text-anchor", "left")
+          .style("alignment-baseline", "middle");
+        // add the color swatches
+        const swatches = legend.selectAll(".swatches").data(this.data);
+        swatches
+          .enter()
+          .append("circle")
+          .attr("cx", this.width - 130)
+          .attr("cy", (d, i) => 45 + i * 15)
+          .attr("r", 5)
+          .style("fill", d => myColor(d.name));
     },
     tick() {
       this.path.attr("d", d => {
@@ -354,11 +310,13 @@ export default {
       data: state => state.data.data,
       entropy: state => state.data.entropy,
       loading: state => state.data.loading,
-      edges: state => state.data.edges
+      edges: state => state.data.edges,
+      viewers: state => state.data.viewers,
+      content: state => state.data.content
     })
   },
   mounted() {
-    if (this.data) {
+    if (this.data.length > 0) {
       this.processData();
       this.render();
     }
