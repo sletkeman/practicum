@@ -28,11 +28,127 @@ export default {
     return {
       recipeId: this.$route.params.id,
       maxNodes: 750,
-      colors: ["#1b70fc", "#faff16", "#d50527", "#158940", "#f898fd", "#24c9d7", "#cb9b64", "#866888", "#22e67a", "#e509ae", "#9dabfa", "#437e8a", "#b21bff", "#ff7b91", "#94aa05", "#ac5906", "#82a68d", "#fe6616", "#7a7352", "#f9bc0f", "#b65d66", "#07a2e6", "#c091ae", "#8a91a7", "#88fc07", "#ea42fe", "#9e8010", "#10b437", "#c281fe", "#f92b75", "#07c99d", "#a946aa", "#bfd544", "#16977e", "#ff6ac8", "#a88178", "#5776a9", "#678007", "#fa9316", "#85c070", "#6aa2a9", "#989e5d", "#fe9169", "#cd714a", "#6ed014", "#c5639c", "#c23271", "#698ffc", "#678275", "#c5a121", "#a978ba", "#ee534e", "#d24506", "#59c3fa", "#ca7b0a", "#6f7385", "#9a634a", "#48aa6f", "#ad9ad0", "#d7908c", "#6a8a53", "#8c46fc", "#8f5ab8", "#fd1105", "#7ea7cf", "#d77cd1", "#a9804b", "#0688b4", "#6a9f3e", "#ee8fba", "#a67389", "#9e8cfe", "#bd443c", "#6d63ff", "#d110d5", "#798cc3", "#df5f83", "#b1b853", "#bb59d8", "#1d960c", "#867ba8", "#18acc9", "#25b3a7", "#f3db1d", "#938c6d", "#936a24", "#a964fb", "#92e460", "#a05787", "#9c87a0", "#20c773", "#8b696d", "#78762d", "#e154c6", "#40835f", "#d73656", "#1afd5c", "#c4f546", "#3d88d8", "#bd3896", "#1397a3", "#f940a5", "#66aeff", "#d097e7", "#fe6ef9", "#d86507", "#8b900a", "#d47270", "#e8ac48", "#cf7c97", "#cebb11", "#718a90", "#e78139", "#ff7463", "#bea1fd"],
+      colors: [
+        "#1b70fc",
+        "#faff16",
+        "#d50527",
+        "#158940",
+        "#f898fd",
+        "#24c9d7",
+        "#cb9b64",
+        "#866888",
+        "#22e67a",
+        "#e509ae",
+        "#9dabfa",
+        "#437e8a",
+        "#b21bff",
+        "#ff7b91",
+        "#94aa05",
+        "#ac5906",
+        "#82a68d",
+        "#fe6616",
+        "#7a7352",
+        "#f9bc0f",
+        "#b65d66",
+        "#07a2e6",
+        "#c091ae",
+        "#8a91a7",
+        "#88fc07",
+        "#ea42fe",
+        "#9e8010",
+        "#10b437",
+        "#c281fe",
+        "#f92b75",
+        "#07c99d",
+        "#a946aa",
+        "#bfd544",
+        "#16977e",
+        "#ff6ac8",
+        "#a88178",
+        "#5776a9",
+        "#678007",
+        "#fa9316",
+        "#85c070",
+        "#6aa2a9",
+        "#989e5d",
+        "#fe9169",
+        "#cd714a",
+        "#6ed014",
+        "#c5639c",
+        "#c23271",
+        "#698ffc",
+        "#678275",
+        "#c5a121",
+        "#a978ba",
+        "#ee534e",
+        "#d24506",
+        "#59c3fa",
+        "#ca7b0a",
+        "#6f7385",
+        "#9a634a",
+        "#48aa6f",
+        "#ad9ad0",
+        "#d7908c",
+        "#6a8a53",
+        "#8c46fc",
+        "#8f5ab8",
+        "#fd1105",
+        "#7ea7cf",
+        "#d77cd1",
+        "#a9804b",
+        "#0688b4",
+        "#6a9f3e",
+        "#ee8fba",
+        "#a67389",
+        "#9e8cfe",
+        "#bd443c",
+        "#6d63ff",
+        "#d110d5",
+        "#798cc3",
+        "#df5f83",
+        "#b1b853",
+        "#bb59d8",
+        "#1d960c",
+        "#867ba8",
+        "#18acc9",
+        "#25b3a7",
+        "#f3db1d",
+        "#938c6d",
+        "#936a24",
+        "#a964fb",
+        "#92e460",
+        "#a05787",
+        "#9c87a0",
+        "#20c773",
+        "#8b696d",
+        "#78762d",
+        "#e154c6",
+        "#40835f",
+        "#d73656",
+        "#1afd5c",
+        "#c4f546",
+        "#3d88d8",
+        "#bd3896",
+        "#1397a3",
+        "#f940a5",
+        "#66aeff",
+        "#d097e7",
+        "#fe6ef9",
+        "#d86507",
+        "#8b900a",
+        "#d47270",
+        "#e8ac48",
+        "#cf7c97",
+        "#cebb11",
+        "#718a90",
+        "#e78139",
+        "#ff7463",
+        "#bea1fd"
+      ],
       links: [],
       nodes: {},
-      height: 1500,
-      width: 1500,
+      height: 900,
+      width: 1700,
       svg: null,
       legend: null,
       simulation: null,
@@ -43,28 +159,20 @@ export default {
         .attr("class", "d3-tip")
         .html(d => {
           if (d.type === "viewer") {
-            return `gender: ${d.gender || "N/A"}`;
+            return `${d.gender} - ${d.age}<br>
+            community: ${d.community}<br>
+            income: ${d.income}<br>
+            education: ${d.education}<br>
+            county size: ${d.county_size}`;
           } else {
-            return d.program_name;
+            return `${d.program_name}<br>
+              community: ${d.community}<br>
+              network: ${d.network}<br>
+              program summary: ${d.program_summary}<br>
+              program type: ${d.program_type}li
+          `;
           }
         })
-      // .html(function(d) {
-      //   if (d.type === "viewer") {
-      //     return `personKey: ${d.person_key}<br>`;
-      //     // age: ${v.age}<br>
-      //     // income: ${v.income}<br>
-      //     // gender: ${v.gender}<br>
-      //     // education: ${v.education}<br>
-      //     // county size: ${v.county_size}`;
-      //   } else {
-      //     return `contentKey: ${d.content_key}<br>`;
-      //     //     network": ${c.network}<br>
-      //     //     program name: ${c.program_name}<br>
-      //     //     program summary: ${c.program_summary}<br>
-      //     //     program type: ${c.program_type}<br>
-      //     // `;
-      //   }
-      // })
     };
   },
   watch: {
@@ -102,7 +210,7 @@ export default {
           }
         });
       });
-      console.log(Object.keys(this.nodes).length)
+      console.log(Object.keys(this.nodes).length);
       this.edges.forEach(e => {
         if (this.nodes[e.PERSONKEY] && this.nodes[`${e.CONTENTSK}`]) {
           this.links.push({
@@ -161,98 +269,92 @@ export default {
             .on("end", this.dragended)
         );
 
-      const myColor = d3.scaleOrdinal().domain([0, this.data.length])
+      const myColor = d3
+        .scaleOrdinal()
+        .domain([0, this.data.length])
         .range(this.colors);
 
       this.node
         .filter(n => n.type === "viewer")
         .append("circle")
-        .attr("r", 5)
+        .attr("r", 8)
         .style("fill", d => myColor(d.community));
 
       this.node
         .filter(n => n.type === "content")
         .append("rect")
-        .attr("width", 10)
-        .attr("height", 10)
+        .attr("width", 16)
+        .attr("height", 16)
         .style("fill", d => myColor(d.community));
 
       //   // add a group for the legend
-        const legend = this.svg.append("g").attr("id", "legend");
-        // outline it with a semi-transparent rectangle
-        legend
-          .append("rect")
-          .attr("fill", "white")
-          .attr("stroke", "lightgray")
-          .attr("fill-opacity", "0.8")
-          .attr("rx", "5px")
-          .attr("width", "160px")
-          .attr("height", `${this.data.length * 17}px`)
-          .attr("x", this.width - 180)
-          .attr("y", 10);
+      const legend = this.svg.append("g").attr("id", "legend");
+      // outline it with a semi-transparent rectangle
+      legend
+        .append("rect")
+        .attr("fill", "white")
+        .attr("stroke", "lightgray")
+        .attr("fill-opacity", "0.8")
+        .attr("rx", "5px")
+        .attr("width", "160px")
+        .attr("height", `${this.data.length * 17}px`)
+        .attr("x", this.width - 180)
+        .attr("y", 10);
 
-        // add the labels
-        legend
-          .append("text")
-          .attr("x", this.width - 85)
-          .attr("y", 60)
-          .text("Viewer")
-          .attr("text-anchor", "left")
-          .style("alignment-baseline", "middle");
-        legend
-          .append("circle")
-          .style("fill", "black")
-          .attr("cx", this.width - 70)
-          .attr("cy", 75)
-          .attr("r", 5)
-        legend
-          .append("text")
-          .attr("x", this.width - 85)
-          .attr("y", 30)
-          .text("Content")
-          .attr("text-anchor", "left")
-          .style("alignment-baseline", "middle");
-        legend
-          .append("rect")
-          .attr("x", this.width - 75)
-          .attr("y", 40)
-          .style("fill", "black")
-          .attr("width", 10)
-          .attr("height", 10)
-        legend
-          .append("text")
-          .attr("x", this.width - 160)
-          .attr("y", 30)
-          .text("Community")
-          .attr("text-anchor", "left")
-          .style("alignment-baseline", "middle");
-        // legend
-        //   .append("text")
-        //   .attr("x", this.width - 160)
-        //   .attr("y", 115)
-        //   .text("in-degree")
-        //   .attr("text-anchor", "left")
-        //   .style("alignment-baseline", "middle");
-
-        // prepare to demonstrate the gradient
-        const labels = legend.selectAll(".labels").data(this.data);
-        labels
-          .enter()
-          .append("text")
-          .attr("x", this.width - 150)
-          .attr("y", (d, i) => 45 + i * 15)
-          .text(d => d.name)
-          .attr("text-anchor", "left")
-          .style("alignment-baseline", "middle");
-        // add the color swatches
-        const swatches = legend.selectAll(".swatches").data(this.data);
-        swatches
-          .enter()
-          .append("circle")
-          .attr("cx", this.width - 130)
-          .attr("cy", (d, i) => 45 + i * 15)
-          .attr("r", 5)
-          .style("fill", d => myColor(d.name));
+      // add the labels
+      legend
+        .append("text")
+        .attr("x", this.width - 85)
+        .attr("y", 60)
+        .text("Viewer")
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
+      legend
+        .append("circle")
+        .style("fill", "black")
+        .attr("cx", this.width - 67)
+        .attr("cy", 75)
+        .attr("r", 8);
+      legend
+        .append("text")
+        .attr("x", this.width - 85)
+        .attr("y", 30)
+        .text("Content")
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
+      legend
+        .append("rect")
+        .attr("x", this.width - 75)
+        .attr("y", 35)
+        .style("fill", "black")
+        .attr("width", 16)
+        .attr("height", 16);
+      legend
+        .append("text")
+        .attr("x", this.width - 160)
+        .attr("y", 30)
+        .text("Community")
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
+      const communities = this.data.map(d => parseInt(d.name)).sort((a, b) => a - b);
+      const labels = legend.selectAll(".labels").data(communities);
+      labels
+        .enter()
+        .append("text")
+        .attr("x", this.width - 150)
+        .attr("y", (d, i) => 45 + i * 16)
+        .text(d => d)
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
+      // add the color swatches
+      const swatches = legend.selectAll(".swatches").data(communities);
+      swatches
+        .enter()
+        .append("circle")
+        .attr("cx", this.width - 130)
+        .attr("cy", (d, i) => 45 + i * 16)
+        .attr("r", 8)
+        .style("fill", d => myColor(d));
     },
     tick() {
       this.path.attr("d", d => {

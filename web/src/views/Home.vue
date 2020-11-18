@@ -23,8 +23,7 @@
           </v-row>
           <v-row>
             <v-col>
-              Average Income:
-              ${{
+              Average Income: ${{
                 (activeItem.viewer_aggs.income / activeItem.viewer_count)
                   | round
               }},000
@@ -130,44 +129,44 @@
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
     <div v-else>
-    Entropy: {{ entropy | round }}
-    <v-treeview :items="data" dense :style="`height:${tableHeight}px`" >
-      <template v-slot:label="{ item }">
-        <div v-if="Object.keys(item).includes('content')">
-          <v-data-table
-            :headers="contentHeaders"
-            :items="item.content"
-            :disable-pagination="true"
-            :dense="true"
-            :hide-default-footer="true"
-          ></v-data-table>
-        </div>
-        <div v-else-if="Object.keys(item).includes('viewers')">
-          <v-data-table
-            :headers="viewerHeaders"
-            :items="item.viewers"
-            :disable-pagination="true"
-            :dense="true"
-            :hide-default-footer="true"
-          ></v-data-table>
-        </div>
-        <div v-else-if="item.children[0].content">
-          {{ item.name }} - {{ item.children[0].content.length }}
-        </div>
-        <div v-else-if="item.children[0].viewers">
-          {{ item.name }} - {{ item.children[0].viewers.length }}
-        </div>
-        <div v-else>
-          {{ item.name }} -
-          <span @mouseenter="handleMouseEnter(item, 'viewer')"
-            >viewers: {{ item.viewer_count }},
-          </span>
-          <span @mouseenter="handleMouseEnter(item, 'content')"
-            >content: {{ item.content_count }}</span
-          >
-        </div>
-      </template>
-    </v-treeview>
+      Entropy: {{ entropy | round }}
+      <v-treeview :items="data" dense :style="`height:${tableHeight}px`">
+        <template v-slot:label="{ item }">
+          <div v-if="Object.keys(item).includes('content')">
+            <v-data-table
+              :headers="contentHeaders"
+              :items="item.content"
+              :disable-pagination="true"
+              :dense="true"
+              :hide-default-footer="true"
+            ></v-data-table>
+          </div>
+          <div v-else-if="Object.keys(item).includes('viewers')">
+            <v-data-table
+              :headers="viewerHeaders"
+              :items="item.viewers"
+              :disable-pagination="true"
+              :dense="true"
+              :hide-default-footer="true"
+            ></v-data-table>
+          </div>
+          <div v-else-if="item.children[0].content">
+            {{ item.name }} - {{ item.children[0].content.length }}
+          </div>
+          <div v-else-if="item.children[0].viewers">
+            {{ item.name }} - {{ item.children[0].viewers.length }}
+          </div>
+          <div v-else>
+            {{ item.name }} -
+            <span @mouseenter="handleMouseEnter(item, 'viewer')"
+              >viewers: {{ item.viewer_count }},
+            </span>
+            <span @mouseenter="handleMouseEnter(item, 'content')"
+              >content: {{ item.content_count }}</span
+            >
+          </div>
+        </template>
+      </v-treeview>
     </div>
   </div>
 </template>
