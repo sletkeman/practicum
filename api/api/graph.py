@@ -51,10 +51,10 @@ def get_condition(body):
     if  useViewingMinutes:
         viewer_condition = f"{viewer_condition} AND v.weekly_viewing_minutes >= {viewingMinutes[0]} AND v.weekly_viewing_minutes <= {viewingMinutes[1]}" 
     if countySize or countySize == 0:
-        joined = "','".join(countySize)
+        joined = "','".join([f'{e}' for e in countySize])
         viewer_condition = f"{viewer_condition} AND v.county_size_level in ('{joined}')"
     if educationLevel:
-        joined = "','".join(educationLevel)
+        joined = "','".join([f'{e}' for e in educationLevel])
         viewer_condition = f"{viewer_condition} AND v.person_education_level in ('{joined}')"
     if language:
         joined = "','".join(language)
@@ -69,10 +69,10 @@ def get_condition(body):
 
 def get_data(body):
     try:
-        # savedDir = 'Nov-15_22:20'
+        # savedDir = 'Dec-01_23:04'
         savedDir = False
-        # if True:
-        if False:
+        if True:
+        # if False:
             useOnDemand, useNestedModel, useDegreeCorrection, useEdgeWeights, sampleSize = \
               itemgetter('useOnDemand', 'useNestedModel', 'useDegreeCorrection', 'useEdgeWeights', 'sampleSize')(body)
             viewer_condition, content_condition = get_condition(body)

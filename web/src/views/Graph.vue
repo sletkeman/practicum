@@ -336,7 +336,9 @@ export default {
         .text("Community")
         .attr("text-anchor", "left")
         .style("alignment-baseline", "middle");
-      const communities = this.data.map(d => parseInt(d.name)).sort((a, b) => a - b);
+      const communities = this.data
+        .map(d => parseInt(d.name))
+        .sort((a, b) => a - b);
       const labels = legend.selectAll(".labels").data(communities);
       labels
         .enter()

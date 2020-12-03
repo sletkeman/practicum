@@ -13,7 +13,8 @@ from services.mysql import (
 )
 
 from services.snowflake import (
-    get_viewers, get_content, get_engagement
+    # get_viewers, get_content, get_engagement
+    get_viewers2 as get_viewers, get_content2 as get_content, get_engagement2 as get_engagement
 )
 
 def case(key):
@@ -79,8 +80,8 @@ def build_tree(useOnDemand, viewer_condition, content_condition, size, savedDir)
         # print(engagement_df.head())
     else:
         viewers = get_viewers(size, viewer_condition, content_condition, useOnDemand)
-        if (len(viewers) < int(size)):
-            raise Exception("Too few viewers were found using the given condtions")
+        # if (len(viewers) < int(size)):
+        #     raise Exception("Too few viewers were found using the given condtions")
         viewers_df = pd.DataFrame(viewers)
         print(f"Viewers: {len(viewers)}")
 
